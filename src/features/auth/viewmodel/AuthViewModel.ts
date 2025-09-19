@@ -18,10 +18,12 @@ export function LoginViewModel() {
       const result = await loginUseCase.execute(usuario, senha);
       if (result) {
         setIsAuthenticated(true);
+        alert("Login bem-sucedido, bem vindo(a) " + usuario + "!");
       }
     } catch (err: any) {
       setError(err.message || "Erro inesperado");
       setIsAuthenticated(false);
+      alert("Erro no login: " + err.message)
     } finally {
       setLoading(false);
     }

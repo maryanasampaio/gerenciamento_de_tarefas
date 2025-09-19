@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { LoginViewModel } from "../viewmodel/AuthViewModel";
+import { Loader2 } from "lucide-react";
 
 
 export const LoginView = () => {
@@ -16,18 +17,16 @@ export const LoginView = () => {
     handleLogin,
   } = LoginViewModel();
 
+  if (loading) return (
+    <>
+      <Loader2 className="h-6 w-6 animate-spin text-primary"></Loader2>
+    </>
 
-
-  if (isAuthenticated) {
-    alert('Seja bem-vindo(a)!')
-  }
-
-  if (error) {
-    alert("erro:" + error)
-  }
+  );
 
 
   return <>
+
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
 
       <Card className="w-[600px] h-[450px] justify-center mx-auto items-center" >
