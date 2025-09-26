@@ -1,4 +1,11 @@
 export interface Auth {
-  usuario: string,
-  senha: string
+  status: string,
+  mensagem: string,
+  dados: {
+
+    usuario: string,
+    nome_completo: string,
+
+  }
+
 }

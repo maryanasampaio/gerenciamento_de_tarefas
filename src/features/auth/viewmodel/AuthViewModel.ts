@@ -23,7 +23,7 @@ export function LoginViewModel() {
     } catch (err: any) {
       setError(err.message || "Erro inesperado");
       setIsAuthenticated(false);
-      alert("Erro no login: " + err.message)
+      alert(err.message)
     } finally {
       setLoading(false);
     }
