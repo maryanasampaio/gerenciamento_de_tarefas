@@ -11,12 +11,7 @@ export class AuthUseCase {
 
   async execute(usuario: string, senha: string): Promise<Auth | null> {
     if (!usuario || !senha) {
-
       throw new Error("Usuário e senha são obrigatórios");
-    }
-
-    if (usuario === "admin.teste" && senha === "123456") {
-      return { usuario, senha }
     }
 
     const auth = await this.repository.login(usuario, senha);
