@@ -8,17 +8,20 @@ export class AuthUseCase {
     this.repository = new Repository();
   }
 
-  async execute(usuario: string, senha: string): Promise<Auth> {
+  async execute(usuario: string, senha: string) {
     if (!usuario || !senha) {
       throw new Error("Usuário e senha são obrigatórios");
     }
 
     const response = await this.repository.login(usuario, senha);
 
-    if (response.status === "erro") {
-      throw new Error(response.mensagem || "Usuário ou senha inválidos");
+    if (response.status !== "sucesso") {
+      throw new Error(response.mensagem || "Erro no login");
     }
-    return response;
+
+    localStorage.setItem("token", response.dados.token);
+
+    return response.dados.usuario;
 
   }
 }
