@@ -1,4 +1,4 @@
-import { Auth } from "../models/AuthModel";
+import { Navigate } from "react-router-dom";
 import { Repository } from "../repository/AuthRepository";
 
 export class AuthUseCase {
@@ -8,7 +8,9 @@ export class AuthUseCase {
     this.repository = new Repository();
   }
 
+
   async execute(usuario: string, senha: string) {
+
     if (!usuario || !senha) {
       throw new Error("Usuário e senha são obrigatórios");
     }
@@ -20,7 +22,6 @@ export class AuthUseCase {
     }
 
     localStorage.setItem("token", response.dados.token);
-
     return response.dados.usuario;
 
   }

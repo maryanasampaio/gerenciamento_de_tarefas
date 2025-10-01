@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AuthUseCase } from "../usecases/AuthUseCase";
+import { useNavigate } from "react-router-dom";
 
 export function LoginViewModel() {
   const [usuario, setUsuario] = useState("");
@@ -10,6 +11,8 @@ export function LoginViewModel() {
 
   const loginUseCase = new AuthUseCase();
 
+  const navigate = useNavigate();
+
   async function handleLogin() {
     setLoading(true);
     setError(null);
@@ -19,6 +22,7 @@ export function LoginViewModel() {
       if (result) {
         setIsAuthenticated(true);
         alert("Login bem-sucedido, bem vindo(a) " + usuario + "!");
+        navigate('/home');
       }
     } catch (err: any) {
       setError(err.message || "Erro inesperado");
