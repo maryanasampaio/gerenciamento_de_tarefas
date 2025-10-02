@@ -15,40 +15,59 @@ export function CadastroViewModel() {
   const navigate = useNavigate();
 
 
-  async function handleListar() {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await cadastroUseCase.listar();
-      if (response) {
-        setError(false);
-        console.log(response);
-      }
-    } catch (error: any) {
-      setError(true);
-      console.log(error.message);
-    }
+  // async function handleListar() {
+  //   setLoading(true);
+  //   setError(null);
+  //   try {
+  //     const response = await cadastroUseCase.listar();
+  //     if (response) {
+  //       setError(false);
+  //       console.log(response);
+  //     }
+  //   } catch (error: any) {
+  //     setError(true);
+  //     console.log(error.message);
+  //   }
 
-  }
+  // }
   async function handleCadastro() {
     setLoading(true);
     setError(null);
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!nome || !usuario || !email || !senha) {
+      alert("Todos os campos são obrigatórios.");
+      setLoading(false);
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      alert("Formato de e-mail inválido.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await cadastroUseCase.criar(nome, usuario, email, senha);
       if (response) {
         setError(false);
         alert('Usuário criado com sucesso!');
-        // navigate('/login');
-        handleListar();
-
+        navigate('/login');
       }
     } catch (error: any) {
       setError(true);
       alert(error.message);
-      navigate('/cadastro');
     } finally {
       setLoading(false);
     }
+  }
+
+
+  async function handleCancel() {
+    setLoading(true);
+    setError(null);
+    navigate('/login');
   }
 
   return {
@@ -63,5 +82,6 @@ export function CadastroViewModel() {
     loading,
     error,
     handleCadastro,
+    handleCancel
   }
 }

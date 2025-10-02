@@ -19,7 +19,7 @@ export function LoginViewModel() {
 
     try {
       const result = await loginUseCase.execute(usuario, senha);
-      if (result) {
+      if (result.usuario) {
         setIsAuthenticated(true);
         alert("Login bem-sucedido, bem vindo(a) " + usuario + "!");
         navigate('/home');

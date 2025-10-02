@@ -16,20 +16,24 @@ export class CadastroUseCase {
       }
       const response = await this.repository.criarUsuario(nome, usuario, email, senha);
 
+      if (response.status >= 400) {
+        throw new Error(response.mensagem);
+      }
+
       return response;
     } catch (error: any) {
       throw new Error(error.message || "Erro ao criar usuário");
     }
   }
 
-  async listar(): Promise<UsuarioModel[]> {
-    try {
-      const response = await this.repository.listarUsuarios();
-      return response;
+  // async listar(): Promise<UsuarioModel[]> {
+  //   try {
+  //     const response = await this.repository.listarUsuarios();
+  //     return response;
 
-    } catch (error: any) {
-      throw new Error(error.message || "Erro ao listar usuários");
-    }
-  }
+  //   } catch (error: any) {
+  //     throw new Error(error.message || "Erro ao listar usuários");
+  //   }
+  // }
 }
 
