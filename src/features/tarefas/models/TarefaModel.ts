@@ -1,6 +1,12 @@
 export interface TarefaModel {
-  titulo: string,
-  importancia: string,
-  status: string,
-  dataCriacao: string
+  status: number;
+  mensagem: string;
+  dados: {
+    id_tarefa?: number;
+    titulo: string;
+    importancia: string;
+    status: string;
+    ativo: boolean | number;
+    created_at: string;
+  }[];
 }

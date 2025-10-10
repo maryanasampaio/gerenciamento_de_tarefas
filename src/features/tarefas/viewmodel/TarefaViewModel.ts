@@ -5,10 +5,15 @@ export function TarefaViewModel() {
   const [titulo, setTitulo] = useState("");
   const [importancia, setImportancia] = useState("");
   const [status, setStatus] = useState("");
+  const [ativo, setAtivo] = useState(true);
   const [dataCriacao, setDataCriacao] = useState("");
   const [tarefas, setTarefas] = useState<any[]>([]);
   const [error, setError] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modoEdicao, setModoEdicao] = useState(false);
+  const [tarefaSelecionada, setTarefaSelecionada] = useState<any | null>(null);
+
 
 
 
@@ -17,14 +22,29 @@ export function TarefaViewModel() {
 
   const tarefaUseCase = new TarefaUseCase();
 
-  async function handleCriar() {
+  async function handleCriar(
+    titulo: string,
+    importancia: string,
+    status: string,
+    ativo: boolean
+  ) {
     try {
-      const request = await tarefaUseCase.criar(titulo, importancia, status, dataCriacao);
+      setLoading(true);
+
+      const request = await tarefaUseCase.criar(
+        titulo,
+        importancia,
+        status,
+        ativo,
+        new Date().toISOString()
+      );
 
       if (request) {
-        alert("Tarefa criada com sucesso!");
+        console.log("Tarefa criada com sucesso!");
         setError(false);
-        setLoading(true);
+        setLoading(false);
+        setIsModalOpen(false);
+        await handleListar(); // Atualiza a lista após criar
       } else {
         alert("Erro ao criar tarefa");
         setError(true);
@@ -34,9 +54,9 @@ export function TarefaViewModel() {
       alert("erro: " + error.message);
       setError(true);
       setLoading(false);
-
     }
   }
+
 
 
   async function handleListar() {
@@ -58,9 +78,38 @@ export function TarefaViewModel() {
     }
   }
 
+
+  async function handleAtualizar(
+    id_tarefa: number,
+    dados: {
+      titulo?: string;
+      importancia?: string;
+      status?: string;
+      ativo?: boolean;
+    }
+  ) {
+    try {
+      setLoading(true);
+      const response = await tarefaUseCase.atualizar(id_tarefa, dados);
+      alert(response.mensagem);
+      await handleListar();
+      setIsModalOpen(false);
+      setModoEdicao(false);
+      setTarefaSelecionada(null);
+    } catch (error: any) {
+      alert(error.message);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
   useEffect(() => {
     handleListar();
   }, []);
+
+
 
 
 
@@ -77,7 +126,14 @@ export function TarefaViewModel() {
     loading,
     handleCriar,
     handleListar,
-    tarefas
+    tarefas,
+    isModalOpen,
+    setIsModalOpen,
+    modoEdicao,
+    setModoEdicao,
+    tarefaSelecionada,
+    setTarefaSelecionada,
+
   }
 
 } 

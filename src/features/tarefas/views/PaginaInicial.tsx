@@ -4,23 +4,19 @@ import { Input } from "@/components/ui/input";
 import { Circle, Delete, Square, Trash } from "lucide-react";
 import RoundCheckbox from "../components/CheckBox";
 import { TarefaViewModel } from "../viewmodel/TarefaViewModel";
+import { ModalCriacao } from "../components/ModalCriacao";
 
 export const PaginaInicial = () => {
 
   const {
-    titulo,
-    setTitulo,
-    importancia,
-    setImportancia,
-    status,
-    setStatus,
-    dataCriacao,
-    setDataCriacao,
-    error,
-    loading,
+    isModalOpen,
+    setIsModalOpen,
+    tarefas,
     handleCriar,
-    handleListar,
-    tarefas
+    modoEdicao,
+    setModoEdicao,
+    tarefaSelecionada,
+    setTarefaSelecionada,
 
   } = TarefaViewModel();
 
@@ -48,7 +44,8 @@ export const PaginaInicial = () => {
           <div className="flex bg-gray-200 p-4 justify-between rounded-lg ">
             <div className="fex-col text-center p-2 ">
               <div className="text-lg text-gray-500 font-bold">Ativas</div>
-              <div className="text-2xl font-bold"> {tarefas.filter((t) => t.status === "ativo").length}</div>
+              <div className="text-2xl font-bold"> {tarefas.filter((t) => t.ativo === 1).length
+              }</div>
             </div>
             <div className="flex -flex-col items-center">
               <Circle></Circle>
@@ -57,7 +54,7 @@ export const PaginaInicial = () => {
           <div className="flex bg-gray-200 p-4 justify-between rounded-lg ">
             <div className="fex-col text-center p-2 ">
               <div className="text-lg text-gray-500 font-bold">Concluidas</div>
-              <div className="text-2xl font-bold">3</div>
+              <div className="text-2xl font-bold">{tarefas.filter((t) => t.status === "concluída").length}</div>
             </div>
             <div className="flex -flex-col items-center">
               <Circle></Circle>
@@ -73,21 +70,20 @@ export const PaginaInicial = () => {
                 className="bg-white w-[600px]"></Input>
             </div>
             <div>
-              <Button className="bg-primary text-white">Adicionar</Button>
+              <Button onClick={() => setIsModalOpen(true)} className="bg-primary text-white">Adicionar</Button>
             </div>
           </div>
         </div>
 
-        {/* Lista de tarefas */}
-        <div className="bg-white h-full mt-5 overflow-y-auto">
+        <div className="bg-white h-full mt-5 overflow-y-auto max-h-[450px]">
           {tarefas.length === 0 ? (
             <div className="text-center text-gray-500 p-4">
               Nenhuma tarefa cadastrada.
             </div>
           ) : (
-            tarefas.map((tarefa, index) => (
+            tarefas.map((tarefa) => (
               <div
-                key={index}
+                key={tarefa.id_tarefa}
                 className="flex justify-between m-3 h-[80px] bg-gray-100 rounded-lg items-center px-3"
               >
                 <div className="flex gap-2 items-center">
@@ -104,6 +100,14 @@ export const PaginaInicial = () => {
             ))
           )}
         </div>
+
+
+        <ModalCriacao open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onConfirm={(dados) =>
+            handleCriar(dados.titulo, dados.importancia, dados.status, dados.ativo)
+          }
+        ></ModalCriacao>
 
       </CardContent>
     </Card>
