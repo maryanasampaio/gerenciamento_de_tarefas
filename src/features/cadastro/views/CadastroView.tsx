@@ -21,12 +21,13 @@ export const CadastroView = () => {
   } = CadastroViewModel()
 
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
-      <span>Criando usuário...</span>
-    </div>
-  )
+  {
+    loading && (
+      <div className="flex justify-center items-center mt-10">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+      </div>
+    )
+  }
 
   return (
     <>

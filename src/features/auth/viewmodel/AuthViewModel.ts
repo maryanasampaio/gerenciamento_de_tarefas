@@ -20,15 +20,16 @@ export function LoginViewModel() {
     try {
       const result = await loginUseCase.execute(usuario, senha);
       if (result.usuario) {
-        setIsAuthenticated(true);
-        navigate('/pagina-inicial');
 
-        alert("Login bem-sucedido, bem vindo(a) " + usuario + "!");
       }
+      setIsAuthenticated(true);
+      navigate('/pagina-inicial');
     } catch (err: any) {
       setError(err.message || "Erro inesperado");
       setIsAuthenticated(false);
       alert(err.message)
+      navigate('/login');
+
     } finally {
       setLoading(false);
     }

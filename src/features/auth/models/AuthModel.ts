@@ -1,5 +1,5 @@
 export interface Auth {
-  status: string,
+  status: number,
   mensagem: string,
   dados: {
     usuario: {

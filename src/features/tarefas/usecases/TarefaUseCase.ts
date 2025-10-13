@@ -80,6 +80,14 @@ export class TarefaUseCase {
     }
   }
 
+  async excluir(id: number): Promise<TarefaModel> {
+    try {
+      const response = await this.repository.excluir(id);
+      return response;
+    } catch (error: any) {
+      return (error.response?.data?.mensagem || error.message);
 
+    }
 
+  }
 }

@@ -17,12 +17,13 @@ export class AuthUseCase {
 
     const response = await this.repository.login(usuario, senha);
 
-    if (response.status !== "sucesso") {
+    if (response.status >= 400) {
       throw new Error(response.mensagem || "Erro no login");
     }
+    if (response.dados?.token) {
+      localStorage.setItem("token", response.dados.token);
 
-    localStorage.setItem("token", response.dados.token);
-    return response.dados.usuario;
+    } return response.dados.usuario;
 
   }
 }

@@ -17,12 +17,13 @@ export const LoginView = () => {
     handleLogin,
   } = LoginViewModel();
 
-  if (loading) return (
-    <>
-      <Loader2 className="h-6 w-6 animate-spin text-primary"></Loader2>
-    </>
-
-  );
+  {
+    loading && (
+      <div className="flex justify-center items-center mt-10">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+      </div>
+    )
+  }
 
 
   return <>

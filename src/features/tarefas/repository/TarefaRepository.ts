@@ -32,4 +32,12 @@ export class TarefaRepository {
 
   }
 
+  async excluir(id: number): Promise<TarefaModel> {
+    const response = await api.delete(`/tarefas/deletar/${id}`);
+
+    return response.data.mensagem;
+
+
+  }
+
 }
