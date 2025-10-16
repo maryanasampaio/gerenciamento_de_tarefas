@@ -15,6 +15,7 @@ export const LoginView = () => {
     error,
     isAuthenticated,
     handleLogin,
+    handleCadastro
   } = LoginViewModel();
 
   {
@@ -48,9 +49,10 @@ export const LoginView = () => {
             onChange={(e) => setSenha(e.target.value)}
           ></Input>
         </CardContent>
-        <CardFooter className="flex justify-center mt-5">
+        <CardFooter className="flex flex-col justify-center mt-5 gap-5">
 
           <Button variant={'default'} onClick={handleLogin}>Entrar</Button>
+          <Button className="" variant={'default'} onClick={handleCadastro}>Cadastrar</Button>
 
 
         </CardFooter>

@@ -8,8 +8,8 @@ export function TarefaViewModel() {
   const [modoEdicao, setModoEdicao] = useState(false);
   const [tarefaSelecionada, setTarefaSelecionada] = useState<any | null>(null);
   const [titulo, setTitulo] = useState("");
-  const [importancia, setImportancia] = useState("");
-  const [status, setStatus] = useState("");
+  const [importancia, setImportancia] = useState("Baixa");
+  const [status, setStatus] = useState("Pendente");
   const [ativo, setAtivo] = useState(true);
 
 

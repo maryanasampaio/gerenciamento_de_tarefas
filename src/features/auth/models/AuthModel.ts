@@ -7,7 +7,7 @@ export interface Auth {
       nome_completo: string,
     }
     token: string
-  }
+  } | null
   /*
 {
     "status": "sucesso",
@@ -21,6 +21,24 @@ export interface Auth {
         "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL2F1dGgvbG9naW4iLCJpYXQiOjE3NTkyNDEyMjQsImV4cCI6MTc1OTI0NDgyNCwibmJmIjoxNzU5MjQxMjI0LCJqdGkiOiJuVXVzcEwzSjBEVEpSekxxIiwic3ViIjoiMSIsInBydiI6IjU4NzA4NjNkNGE2MmQ3OTE0NDNmYWY5MzZmYzM2ODAzMWQxMTBjNGYifQ.fkdPLZh4oxwdrNch9LXJOv-4iGWLEIR5Qlmhdb3VOZg"
     }
 }
+
+
+
+
+retorno do logout
+
+{
+    "status": 200,
+    "mensagem": "Logout realizado com sucesso",
+    "dados": null
+}
+
+
+
+
   */
+
+
+
 
 }

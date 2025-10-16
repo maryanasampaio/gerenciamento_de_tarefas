@@ -1,4 +1,6 @@
 // src/components/Layout.tsx
+import { Footer } from "@/components/Footer/Footer";
+import { Header } from "@/components/Header/Header";
 import { ReactNode } from "react";
 
 interface LayoutProps {
@@ -8,9 +10,7 @@ interface LayoutProps {
 export const LayoutApp = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
-      {/* Cabeçalho fixo */}
-      <header className="bg-white-600 text-white py-4 px-8 shadow-md">
-      </header>
+      <Header></Header>
 
       {/* Conteúdo centralizado */}
       <main className="flex-1 flex items-center justify-center p-4">
@@ -18,9 +18,7 @@ export const LayoutApp = ({ children }: LayoutProps) => {
       </main>
 
       {/* Rodapé */}
-      <footer className="bg-gray-200 text-center py-3 text-sm">
-        © 2025 - Todos os direitos reservados
-      </footer>
+      <Footer></Footer>
     </div>
   );
 };

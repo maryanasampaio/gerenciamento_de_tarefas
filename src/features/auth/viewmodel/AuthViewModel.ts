@@ -19,7 +19,7 @@ export function LoginViewModel() {
 
     try {
       const result = await loginUseCase.execute(usuario, senha);
-      if (result.usuario) {
+      if (result?.usuario) {
 
       }
       setIsAuthenticated(true);
@@ -35,6 +35,20 @@ export function LoginViewModel() {
     }
   }
 
+  async function handleCadastro() {
+    navigate('/cadastro');
+  }
+
+  async function handleLogout() {
+    try {
+      await loginUseCase.logout();
+      navigate('/login');
+      setIsAuthenticated(false);
+    } catch (error: any) {
+      setError(error.message);
+    }
+  }
+
   return {
     usuario,
     setUsuario,
@@ -44,5 +58,7 @@ export function LoginViewModel() {
     error,
     isAuthenticated,
     handleLogin,
+    handleCadastro,
+    handleLogout
   };
 }

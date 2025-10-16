@@ -14,4 +14,9 @@ export class Repository {
       throw new Error(message);
     }
   }
+
+  async logout(): Promise<Auth> {
+    const response = await api.post('/auth/logout');
+    return response.data;
+  }
 }

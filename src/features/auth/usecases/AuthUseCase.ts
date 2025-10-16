@@ -23,7 +23,24 @@ export class AuthUseCase {
     if (response.dados?.token) {
       localStorage.setItem("token", response.dados.token);
 
-    } return response.dados.usuario;
+    } return response.dados?.usuario;
+
+  }
+
+  async logout() {
+    try {
+      const response = await this.repository.logout();
+
+      if (response.status !== 200) {
+        throw new Error(response.mensagem || "Erro ao fazer logout");
+      }
+
+      localStorage.removeItem("token");
+      return true;
+
+    } catch (error: any) {
+      throw new Error(error.response.mensagem || "Erro ao fazer logout");
+    }
 
   }
 }

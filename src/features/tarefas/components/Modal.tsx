@@ -25,8 +25,8 @@ export function Modal({
   tarefa,
 }: ModalProps) {
   const [titulo, setTitulo] = useState("");
-  const [importancia, setImportancia] = useState("Selecione");
-  const [status, setStatus] = useState("");
+  const [importancia, setImportancia] = useState("Baixa");
+  const [status, setStatus] = useState("Pendente");
   const [ativo, setAtivo] = useState(true);
 
   useEffect(() => {
