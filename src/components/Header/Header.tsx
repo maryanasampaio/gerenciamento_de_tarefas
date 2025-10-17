@@ -23,7 +23,10 @@ export const Header = () => {
           <h2 className="text-black">Task</h2>
           <div className="flex gap-2 items-center">
             <UserIcon className="text-black h-6 w-6" onClick={handleLogout}></UserIcon>
-            <h2 className="text-black">nome do usuário</h2>
+            <div onClick={handleMenu}>
+              <h2 className="text-black">nome do usuário</h2>
+
+            </div>
           </div>
 
         </div>

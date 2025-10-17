@@ -45,7 +45,8 @@ export function LoginViewModel() {
       navigate('/login');
       setIsAuthenticated(false);
     } catch (error: any) {
-      setError(error.message);
+      setError(error.mensagem || "Erro ao fazer logout");
+
     }
   }
 

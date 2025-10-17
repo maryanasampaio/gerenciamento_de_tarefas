@@ -90,6 +90,27 @@ export function TarefaViewModel() {
     setIsModalOpen(true);
   }
 
+  async function handleConcluirTarefa(id_tarefa: number, statusAtual: string) {
+    try {
+      setLoading(true);
+
+      // alterna o status
+      const novoStatus = statusAtual === "concluida" ? "pendente" : "concluida";
+
+      await tarefaUseCase.atualizar(id_tarefa, { status: novoStatus });
+
+      // Atualiza o estado local para refletir a mudança sem refazer o GET
+      setTarefas((prev) =>
+        prev.map((t) =>
+          t.id_tarefa === id_tarefa ? { ...t, status: novoStatus } : t
+        )
+      );
+    } catch (error: any) {
+      alert("Erro ao atualizar status da tarefa: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
 
 
@@ -110,6 +131,7 @@ export function TarefaViewModel() {
     abrirModalEdicao,
     handleCriarOuAtualizar,
     setIsModalOpen,
-    handleCancel
+    handleCancel,
+    handleConcluirTarefa
   };
 }

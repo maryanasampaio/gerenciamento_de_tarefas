@@ -1,17 +1,19 @@
-import { Check } from "lucide-react";
-import { useState } from "react";
 
-export default function RoundCheckbox() {
-  const [checked, setChecked] = useState(false);
+interface RoundCheckboxProps {
+  checked: boolean;
+  onChange: () => void;
+}
 
+export default function RoundCheckbox({ checked, onChange }: RoundCheckboxProps) {
   return (
-    <button
-      type="button"
-      onClick={() => setChecked(!checked)}
-      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors
-        ${checked ? "bg-blue-500 border-blue-500" : "bg-white border-gray-400"}`}
+    <div
+      onClick={onChange}
+      className={`h-5 w-5 rounded-full border flex items-center justify-center cursor-pointer 
+        transition-colors duration-200 
+        ${checked ? "bg-green-500 border-green-500" : "bg-white border-gray-400"}
+      `}
     >
-      {checked && <Check className="w-6 h-6 text-white" />}
-    </button>
+      {checked && <span className="text-white text-sm font-bold">✓</span>}
+    </div>
   );
 }

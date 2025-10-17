@@ -17,8 +17,11 @@ export const PaginaInicial = () => {
     handleCriarOuAtualizar,
     abrirModalCriacao,
     abrirModalEdicao,
-    handleCancel
+    handleCancel,
+    handleConcluirTarefa
   } = TarefaViewModel();
+
+
 
   return (
     <Card className="h-screen w-[800px] bg-white flex flex-col shadow-lg rounded-2xl overflow-hidden">
@@ -89,8 +92,16 @@ export const PaginaInicial = () => {
                 className="flex justify-between m-3 h-[80px] bg-gray-100 rounded-lg items-center px-3"
               >
                 <div className="flex gap-2 items-center">
-                  <RoundCheckbox />
-                  <h2 className="text-lg font-semibold text-gray-700">{tarefa.titulo}</h2>
+                  <RoundCheckbox
+                    checked={tarefa.status === "concluida"}
+                    onChange={() => handleConcluirTarefa(tarefa.id_tarefa, tarefa.status)}
+                  />
+
+                  <h2
+
+                    className={tarefa.status === "concluida" ? "text-gray-400 line-through" : "text-lg font-semibold text-gray-700"}   >{tarefa.titulo}</h2>
+
+
                 </div>
                 <div className="flex gap-3 items-center">
                   <span className="text-sm font-medium capitalize">{tarefa.importancia}</span>
