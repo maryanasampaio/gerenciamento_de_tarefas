@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { CadastroUseCase } from "../usecases/CadastroUseCase";
+import { UsuarioUseCase } from "../usecases/UsuarioUseCase";
 import { useNavigate } from "react-router-dom";
 
-export function CadastroViewModel() {
+export function UsuarioViewModel() {
   const [nome, setNome] = useState("");
   const [usuario, setUsuario] = useState("");
   const [email, setEmail] = useState("");
@@ -11,25 +11,11 @@ export function CadastroViewModel() {
   const [error, setError] = useState<boolean | null>(null);
 
 
-  const cadastroUseCase = new CadastroUseCase();
+  const cadastroUseCase = new UsuarioUseCase();
   const navigate = useNavigate();
 
 
-  // async function handleListar() {
-  //   setLoading(true);
-  //   setError(null);
-  //   try {
-  //     const response = await cadastroUseCase.listar();
-  //     if (response) {
-  //       setError(false);
-  //       console.log(response);
-  //     }
-  //   } catch (error: any) {
-  //     setError(true);
-  //     console.log(error.message);
-  //   }
 
-  // }
   async function handleCadastro() {
     setLoading(true);
     setError(null);

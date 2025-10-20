@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { CadastroViewModel } from "../viewmodel/CadastroViewModel"
+import { UsuarioViewModel } from "../viewmodel/UsuarioViewModel"
 import { Loader2 } from "lucide-react"
 
 export const CadastroView = () => {
@@ -18,7 +18,7 @@ export const CadastroView = () => {
     loading,
     handleCadastro,
     handleCancel
-  } = CadastroViewModel()
+  } = UsuarioViewModel()
 
 
   {

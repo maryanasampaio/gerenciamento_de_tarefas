@@ -16,7 +16,4 @@ export class Repository {
   }
 
 
-  // async listarUsuarios(): Promise<UsuarioModel[]> {
-  //   return Repository.usuarios;
-  // }
 }

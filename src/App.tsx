@@ -1,9 +1,10 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { LoginView } from "./features/auth/views/LoginView";
-import { CadastroView } from "./features/cadastro/views/CadastroView";
 import { PaginaInicial } from "./features/tarefas/views/PaginaInicial";
 import { LayoutApp } from "./Layout/LayoutApp";
 import { RouteGuard } from "./components/RouteGuard/RouteGuard";
+import { ConfigUsuarioView } from "./features/usuario/views/ConfigUsuarioView";
+import { CadastroView } from "./features/usuario/views/CadastroView";
 
 
 
@@ -24,7 +25,14 @@ export default function App() {
 
             } />
 
-
+          {/* <Route
+            path="/config-usuario"
+            element={
+              <RouteGuard>
+                <ConfigUsuarioView />
+              </RouteGuard>
+            }
+          /> */}
 
         </Routes>
 

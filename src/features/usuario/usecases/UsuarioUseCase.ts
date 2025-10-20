@@ -1,7 +1,7 @@
 import { UsuarioModel } from "../models/UsuarioModel";
-import { Repository } from "../repository/CadastroRepository";
+import { Repository } from "../repository/UsuarioRepository";
 
-export class CadastroUseCase {
+export class UsuarioUseCase {
   protected repository;
 
   constructor() {
@@ -26,14 +26,5 @@ export class CadastroUseCase {
     }
   }
 
-  // async listar(): Promise<UsuarioModel[]> {
-  //   try {
-  //     const response = await this.repository.listarUsuarios();
-  //     return response;
-
-  //   } catch (error: any) {
-  //     throw new Error(error.message || "Erro ao listar usuários");
-  //   }
-  // }
 }
 
