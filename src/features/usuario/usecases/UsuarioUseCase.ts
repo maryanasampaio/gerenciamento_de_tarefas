@@ -25,6 +25,34 @@ export class UsuarioUseCase {
       throw new Error(error.message || "Erro ao criar usuário");
     }
   }
+  async buscarUsuarioAutenticado() {
+    try {
+      const response = await this.repository.getUsuarioAutenticado();
 
+      if (response.status !== 200) {
+        throw new Error(response.mensagem);
+      }
+
+      return response.dados;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.mensagem || "Erro ao buscar usuário autenticado");
+    }
+  }
+
+  async atualizarUsuario(
+    id_usuario: number,
+    dados: Partial<{ nome_completo: string; usuario: string; email: string; senha: string }>
+  ) {
+    try {
+      const response = await this.repository.atualizarUsuario(id_usuario, dados);
+
+      if (response.status !== 200) {
+        throw new Error(response.mensagem);
+      }
+
+      return response.dados;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.mensagem || "Erro ao atualizar usuário");
+    }
+  }
 }
-

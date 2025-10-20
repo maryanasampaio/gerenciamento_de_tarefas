@@ -6,6 +6,7 @@ export interface UsuarioModel {
     nome_completo: string,
     usuario: string,
     email: string,
+    senha?: string
   }
 }
 

@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UsuarioUseCase } from "../usecases/UsuarioUseCase";
 import { useNavigate } from "react-router-dom";
 
 export function UsuarioViewModel() {
+  const [idUsuario, setIdUsuario] = useState<number | null>(null);
+
   const [nome, setNome] = useState("");
   const [usuario, setUsuario] = useState("");
   const [email, setEmail] = useState("");
@@ -11,8 +13,28 @@ export function UsuarioViewModel() {
   const [error, setError] = useState<boolean | null>(null);
 
 
-  const cadastroUseCase = new UsuarioUseCase();
+  const usuarioUseCase = new UsuarioUseCase();
   const navigate = useNavigate();
+
+
+
+
+  async function carregarUsuarioAutenticado() {
+    try {
+      setLoading(true);
+      const dados = await usuarioUseCase.buscarUsuarioAutenticado();
+
+      setIdUsuario(dados.id_usuario);
+      setNome(dados.nome_completo);
+      setUsuario(dados.usuario);
+      setEmail(dados.email);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
 
 
 
@@ -35,7 +57,7 @@ export function UsuarioViewModel() {
     }
 
     try {
-      const response = await cadastroUseCase.criar(nome, usuario, email, senha);
+      const response = await usuarioUseCase.criar(nome, usuario, email, senha);
       if (response) {
         setError(false);
         alert('Usuário criado com sucesso!');
@@ -49,11 +71,41 @@ export function UsuarioViewModel() {
     }
   }
 
+  async function handleAtualizarUsuario() {
+    if (!idUsuario) return;
 
-  async function handleCancel() {
+    try {
+      setLoading(true);
+      await usuarioUseCase.atualizarUsuario(idUsuario, {
+        nome_completo: nome,
+        usuario,
+        email,
+        senha: senha || undefined,
+      });
+      alert("Usuário atualizado com sucesso!");
+      navigate('/pagina-inicial');
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    carregarUsuarioAutenticado();
+  }, []);
+
+  async function handleCancelCadastro() {
     setLoading(true);
     setError(null);
     navigate('/login');
+  }
+
+  async function handleCancelAtualizacao() {
+    setLoading(true);
+    setError(null);
+    navigate('/pagina-inicial');
+
   }
 
   return {
@@ -68,6 +120,10 @@ export function UsuarioViewModel() {
     loading,
     error,
     handleCadastro,
-    handleCancel
+    handleCancelCadastro,
+    handleCancelAtualizacao,
+    handleAtualizarUsuario,
+    carregarUsuarioAutenticado,
+    idUsuario
   }
 }

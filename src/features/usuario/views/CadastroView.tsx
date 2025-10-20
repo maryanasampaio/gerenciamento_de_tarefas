@@ -17,8 +17,7 @@ export const CadastroView = () => {
     error,
     loading,
     handleCadastro,
-    handleCancel
-  } = UsuarioViewModel()
+    handleCancelCadastro } = UsuarioViewModel()
 
 
   {
@@ -65,7 +64,7 @@ export const CadastroView = () => {
             </Input>
           </CardContent>
           <CardFooter className="flex justify-end m-[25px]">
-            <Button variant={"ghost"} onClick={handleCancel}>Cancelar</Button>
+            <Button variant={"ghost"} onClick={handleCancelCadastro}>Cancelar</Button>
             <Button onClick={handleCadastro}>Cadastrar</Button>
           </CardFooter>
         </Card>

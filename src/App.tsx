@@ -3,8 +3,8 @@ import { LoginView } from "./features/auth/views/LoginView";
 import { PaginaInicial } from "./features/tarefas/views/PaginaInicial";
 import { LayoutApp } from "./Layout/LayoutApp";
 import { RouteGuard } from "./components/RouteGuard/RouteGuard";
-import { ConfigUsuarioView } from "./features/usuario/views/ConfigUsuarioView";
 import { CadastroView } from "./features/usuario/views/CadastroView";
+import { ConfigUsuarioView } from "./features/usuario/views/ConfigUsuarioView";
 
 
 
@@ -25,14 +25,14 @@ export default function App() {
 
             } />
 
-          {/* <Route
+          <Route
             path="/config-usuario"
             element={
               <RouteGuard>
                 <ConfigUsuarioView />
               </RouteGuard>
             }
-          /> */}
+          />
 
         </Routes>
 
