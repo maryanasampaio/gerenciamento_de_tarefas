@@ -1,19 +1,22 @@
-// src/RouteGuard.tsx
-import { JSX } from "react";
+import { JSX, useEffect } from "react";
 import { Navigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 interface RouteGuardProps {
   children: JSX.Element;
 }
 
 export function RouteGuard({ children }: RouteGuardProps) {
-  const token = localStorage.getItem("token");
+  const { isAuthenticated, checkAuth } = useAuth();
 
-  // se não houver token, redireciona para login
-  if (!token) {
+  // Garante que o cookie é checado ao montar o guard
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // se houver, renderiza a rota protegida
   return children;
 }

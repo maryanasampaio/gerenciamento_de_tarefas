@@ -20,10 +20,7 @@ export class AuthUseCase {
     if (response.status >= 400) {
       throw new Error(response.mensagem || "Erro no login");
     }
-    if (response.dados?.token) {
-      localStorage.setItem("token", response.dados.token);
-
-    } return response.dados?.usuario;
+    return response.dados?.usuario;
 
   }
 
@@ -35,7 +32,6 @@ export class AuthUseCase {
         throw new Error(response.mensagem || "Erro ao fazer logout");
       }
 
-      localStorage.removeItem("token");
       return true;
 
     } catch (error: any) {

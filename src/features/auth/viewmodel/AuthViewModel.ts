@@ -18,11 +18,9 @@ export function LoginViewModel() {
     setError(null);
 
     try {
-      const result = await loginUseCase.execute(usuario, senha);
-      if (result?.usuario) {
-        setIsAuthenticated(true);
-        navigate("/pagina-inicial");
-      }
+      await loginUseCase.execute(usuario, senha);
+      setIsAuthenticated(true);
+      navigate("/pagina-inicial");
     } catch (err: any) {
       setError(err.message || "Erro inesperado");
       setIsAuthenticated(false);
@@ -32,6 +30,7 @@ export function LoginViewModel() {
       setLoading(false);
     }
   }
+
 
   async function handleCadastro() {
     navigate("/cadastro");
