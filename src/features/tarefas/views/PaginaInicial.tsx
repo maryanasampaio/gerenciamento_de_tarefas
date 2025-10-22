@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Circle, Loader2, Trash, SquarePen } from "lucide-react";
+import { Circle, Loader2, Trash, SquarePen, Search } from "lucide-react";
 import RoundCheckbox from "../components/CheckBox";
 import { TarefaViewModel } from "../viewmodel/TarefaViewModel";
 import { Modal } from "../components/Modal";
@@ -18,7 +18,10 @@ export const PaginaInicial = () => {
     abrirModalCriacao,
     abrirModalEdicao,
     handleCancel,
-    handleConcluirTarefa
+    handleConcluirTarefa,
+    termo,
+    setTermo,
+    handlePesquisar,
   } = TarefaViewModel();
 
 
@@ -74,7 +77,12 @@ export const PaginaInicial = () => {
         {/* Campo e botão de nova tarefa */}
         <div className="flex h-[100px] overflow-hidden min-w-[750px] bg-gray-200 rounded-lg mt-5 items-center justify-center">
           <div className="flex gap-3">
-            <Input placeholder="Adicionar uma nova tarefa..." className="bg-white w-[600px]" />
+            <Input
+              placeholder="Pesquisar Tarefa..."
+              value={termo}
+              onChange={(e) => setTermo(e.target.value)}
+              className="bg-white w-[550px]" />
+            <Search onClick={handlePesquisar} className="h-4 w-4">Buscar</Search>
             <Button onClick={abrirModalCriacao} className="bg-primary text-white">
               Adicionar
             </Button>
@@ -84,7 +92,7 @@ export const PaginaInicial = () => {
         {/* Lista de tarefas */}
         <div className="bg-white h-full mt-5 overflow-y-auto max-h-[450px]">
           {tarefas.length === 0 ? (
-            <div className="text-center text-gray-500 p-4">Nenhuma tarefa cadastrada.</div>
+            <div className="text-center text-gray-500 p-4">Nenhuma tarefa encontrada.</div>
           ) : (
             tarefas.map((tarefa) => (
               <div

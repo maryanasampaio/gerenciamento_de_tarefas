@@ -40,4 +40,9 @@ export class TarefaRepository {
 
   }
 
+  async buscarTarefa(termo: string): Promise<TarefaModel> {
+    const response = await api.get(`tarefas/pesquisar?q=${termo}`);
+    return response.data;
+  }
+
 }

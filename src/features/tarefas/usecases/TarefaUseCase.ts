@@ -90,4 +90,15 @@ export class TarefaUseCase {
     }
 
   }
+
+  async buscarTarefa(termo: string): Promise<TarefaModel["dados"]> {
+    try {
+      const response = await this.repository.buscarTarefa(termo);
+
+      return response.dados;
+    } catch (error: any) {
+      return (error.response.mensagem || error.message);
+    }
+
+  }
 }
