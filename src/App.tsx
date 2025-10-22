@@ -5,39 +5,41 @@ import { LayoutApp } from "./Layout/LayoutApp";
 import { RouteGuard } from "./components/RouteGuard/RouteGuard";
 import { CadastroView } from "./features/usuario/views/CadastroView";
 import { ConfigUsuarioView } from "./features/usuario/views/ConfigUsuarioView";
+import { AuthProvider } from "./context/AuthContext";
 
 
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <LayoutApp>
-        <Routes>
-          <Route path="/" element={<LoginView />} />
-          <Route path="/login" element={<LoginView />} />
-          <Route path="/cadastro" element={<CadastroView />} />
+    <AuthProvider>
 
-          <Route path="/pagina-inicial"
-            element={
-              <RouteGuard>
-                <PaginaInicial />
-              </RouteGuard>
+      <BrowserRouter>
+        <LayoutApp>
+          <Routes>
+            <Route path="/" element={<LoginView />} />
+            <Route path="/login" element={<LoginView />} />
+            <Route path="/cadastro" element={<CadastroView />} />
 
-            } />
+            <Route path="/pagina-inicial"
+              element={
+                <RouteGuard>
+                  <PaginaInicial />
+                </RouteGuard>
 
-          <Route
-            path="/config-usuario"
-            element={
-              <RouteGuard>
-                <ConfigUsuarioView />
-              </RouteGuard>
-            }
-          />
+              } />
 
-        </Routes>
-
-      </LayoutApp>
-    </BrowserRouter>
+            <Route
+              path="/config-usuario"
+              element={
+                <RouteGuard>
+                  <ConfigUsuarioView />
+                </RouteGuard>
+              }
+            />
+          </Routes>
+        </LayoutApp>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

@@ -134,7 +134,6 @@ export function TarefaViewModel() {
 
 
 
-
   useEffect(() => {
     handleListar();
   }, []);
