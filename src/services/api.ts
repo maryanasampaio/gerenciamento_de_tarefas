@@ -12,10 +12,8 @@ export const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // não redireciona automaticamente para login aqui
     if (error.response?.status === 401) {
-      console.warn("Sessão expirada ou não autenticado"); window.location.href = "/login";
-      window.location.href = "/login";
+      console.warn("Sessão expirada ou não autenticado");
 
     }
     return Promise.reject(error);

@@ -1,65 +1,67 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { LoginViewModel } from "../viewmodel/AuthViewModel";
-import { Loader2 } from "lucide-react";
+import React, { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Link, useNavigate } from "react-router-dom"
+import { LoginViewModel } from "../viewmodel/AuthViewModel"
 
-
-export const LoginView = () => {
+export default function LoginView() {
   const {
+    handleLogin,
     usuario,
     setUsuario,
     senha,
     setSenha,
-    loading,
-    error,
-    isAuthenticated,
-    handleLogin,
-    handleCadastro
+
+
   } = LoginViewModel();
 
-  {
-    loading && (
-      <div className="flex justify-center items-center mt-10">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+
+
+  return (
+    <Card className="w-full max-w-md p-8">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-foreground mb-2">TaskFlow</h1>
+        <p className="text-muted-foreground">Entre na sua conta</p>
       </div>
-    )
-  }
 
+      <div className="space-y-2">
+        <Label htmlFor="usuario">Usuário</Label>
+        <Input
+          id="usuario"
+          type="usuario"
+          placeholder="Usuário"
+          value={usuario}
+          onChange={(e) => setUsuario(e.target.value)}
+          required
+        />
+      </div>
 
-  return <>
+      <div className="space-y-2">
+        <Label htmlFor="password">Senha</Label>
+        <Input
+          id="senha"
+          type="password"
+          placeholder="••••••••"
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          required
+        />
+      </div>
 
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <Button type="submit" className="w-full" size="lg" onClick={handleLogin}>
+        Entrar
+      </Button>
 
-      <Card className="w-[600px] h-[450px] justify-center mx-auto items-center" >
-        <CardHeader>
-          <h1 className="text-3xl font-bold text-center mt-10">Login</h1>
-        </CardHeader>
-        <CardContent className="gap-3 flex flex-col mt-10 m-[20px]">
-          <Input
-            type="text"
-            placeholder="Usuário"
-            value={usuario}
-            onChange={(e) => setUsuario(e.target.value)}
-          ></Input>
-          <Input
-            type="password"
-            placeholder="Senha"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-          ></Input>
-        </CardContent>
-        <CardFooter className="flex flex-col justify-center mt-5 gap-5">
-
-          <Button variant={'default'} onClick={handleLogin}>Entrar</Button>
-          <Button className="" variant={'default'} onClick={handleCadastro}>Cadastrar</Button>
-
-
-        </CardFooter>
-
-
-      </Card>
-
-    </div>
-  </>
+      <div className="mt-6 text-center">
+        <p className="text-sm text-muted-foreground">
+          Não tem uma conta?{" "}
+          <Link to="/cadastro" className="text-primary hover:underline font-medium">
+            Cadastre-se
+          </Link>
+        </p>
+      </div>
+    </Card>
+  )
 }

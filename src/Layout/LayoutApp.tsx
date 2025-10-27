@@ -1,7 +1,7 @@
-// src/components/Layout.tsx
+// src/Layout/LayoutApp.tsx
 import { Footer } from "@/components/Footer/Footer";
 import { Header } from "@/components/Header/Header";
-import { LoginViewModel } from "@/features/auth/viewmodel/AuthViewModel";
+import { useAuth } from "@/context/AuthContext";
 import { ReactNode } from "react";
 
 interface LayoutProps {
@@ -9,8 +9,7 @@ interface LayoutProps {
 }
 
 export const LayoutApp = ({ children }: LayoutProps) => {
-
-  const { isAuthenticated, loading } = LoginViewModel();
+  const { isAuthenticated } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">

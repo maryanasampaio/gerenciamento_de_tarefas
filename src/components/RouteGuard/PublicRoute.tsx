@@ -3,11 +3,11 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 
-interface RouteGuardProps {
+interface PublicRouteProps {
   children: JSX.Element;
 }
 
-export function RouteGuard({ children }: RouteGuardProps) {
+export function PublicRoute({ children }: PublicRouteProps) {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
@@ -18,8 +18,8 @@ export function RouteGuard({ children }: RouteGuardProps) {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  if (!loading && isAuthenticated) {
+    return <Navigate to="/pagina-inicial" replace />;
   }
 
   return children;
