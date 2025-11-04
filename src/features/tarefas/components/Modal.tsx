@@ -25,8 +25,8 @@ export function Modal({
   tarefa,
 }: ModalProps) {
   const [titulo, setTitulo] = useState("");
-  const [importancia, setImportancia] = useState("Baixa");
-  const [status, setStatus] = useState("Pendente");
+  const [importancia, setImportancia] = useState("");
+  const [status, setStatus] = useState("");
   const [ativo, setAtivo] = useState(true);
 
   useEffect(() => {
@@ -43,47 +43,74 @@ export function Modal({
     }
   }, [modoEdicao, tarefa, open]);
 
+  const handleConfirm = () => {
+    if (!titulo || !importancia || !status) {
+      alert("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+    onConfirm({ titulo, importancia, status, ativo });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{modoEdicao ? "Editar Tarefa" : "Nova Tarefa"}</DialogTitle>
+          <DialogTitle>
+            {modoEdicao ? "Editar Tarefa" : "Nova Tarefa"}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-3 mt-3">
-          <Input
-            placeholder="Título"
-            value={titulo}
-            onChange={(e) => setTitulo(e.target.value)}
-          />
-          <select
-            value={importancia}
-            onChange={(e) => setImportancia(e.target.value)}
-            className="border p-2 rounded"
+        <div className="flex flex-col gap-4 mt-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-muted-foreground">
+              Título
+            </label>
+            <Input
+              placeholder="Digite o título da tarefa"
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+            />
+          </div>
 
-          >
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-muted-foreground">
+              Importância
+            </label>
+            <select
+              value={importancia}
+              onChange={(e) => setImportancia(e.target.value)}
+              className="border p-2 rounded focus:ring-2 focus:ring-primary/40 focus:outline-none"
+            >
+              <option value="">Selecione...</option>
+              <option value="baixa">Baixa</option>
+              <option value="media">Média</option>
+              <option value="alta">Alta</option>
+            </select>
+          </div>
 
-            <option value="baixa">Baixa</option>
-            <option value="media">Média</option>
-            <option value="alta">Alta</option>
-          </select>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="border p-2 rounded"
-          >
-            <option value="pendente">Pendente</option>
-            <option value="em_andamento">Em andamento</option>
-            <option value="concluida">Concluída</option>
-          </select>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-muted-foreground">
+              Status
+            </label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="border p-2 rounded focus:ring-2 focus:ring-primary/40 focus:outline-none"
+            >
+              <option value="">Selecione...</option>
+              <option value="pendente">Pendente</option>
+              <option value="em_andamento">Em andamento</option>
+              <option value="concluida">Concluída</option>
+            </select>
+          </div>
         </div>
 
-        <DialogFooter className="mt-5 flex justify-end gap-2">
+        <DialogFooter className="mt-6 flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
           <Button
-            onClick={() => onConfirm({ titulo, importancia, status, ativo })}
+            onClick={handleConfirm}
             className="bg-primary text-white"
           >
             {modoEdicao ? "Salvar alterações" : "Criar tarefa"}

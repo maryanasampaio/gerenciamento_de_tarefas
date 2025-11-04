@@ -20,13 +20,13 @@ export default function LoginView() {
 
 
   return (
-    <Card className="w-full max-w-md p-8">
-      <div className="mb-8 text-center">
+    <Card className="w-full max-w-[500px] p-8 space-y-8 h-[500px]">
+      <div className="mb-8 text-center mt-5">
         <h1 className="text-3xl font-bold text-foreground mb-2">TaskFlow</h1>
         <p className="text-muted-foreground">Entre na sua conta</p>
       </div>
 
-      <div className="space-y-2">
+      <div className="mb-5">
         <Label htmlFor="usuario">Usuário</Label>
         <Input
           id="usuario"

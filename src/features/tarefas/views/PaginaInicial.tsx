@@ -1,12 +1,25 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Circle, Loader2, Trash, SquarePen, Search } from "lucide-react";
-import RoundCheckbox from "../components/CheckBox";
-import { TarefaViewModel } from "../viewmodel/TarefaViewModel";
+import {
+  Circle,
+  Loader2,
+  Trash,
+  CheckCircle2,
+  Plus,
+  SquarePen,
+  Search
+} from "lucide-react";
 import { Modal } from "../components/Modal";
+import { TarefaViewModel } from "../viewmodel/TarefaViewModel";
+import RoundCheckbox from "../components/CheckBox";
+import { ResultCards } from "../components/ResultCards";
+import { PesquisaTarefa } from "../components/PesquisaTarefa";
+import { ImportanciaBadge } from "../components/ImportanciaBadge";
+import { TarefasCard } from "../components/TarefasCard";
 
-export const PaginaInicial = () => {
+export const PaginaInicial: React.FC = () => {
   const {
     tarefas,
     loading,
@@ -19,128 +32,74 @@ export const PaginaInicial = () => {
     abrirModalEdicao,
     handleCancel,
     handleConcluirTarefa,
-    termo,
-    setTermo,
-    handlePesquisar,
+    
   } = TarefaViewModel();
 
-
-
   return (
-    <Card className="h-screen w-[800px] bg-white flex flex-col shadow-lg rounded-2xl overflow-hidden">
-      <CardHeader className="flex flex-col m-3 gap-1">
-        <h1 className="text-3xl font-bold">Minhas Tarefas</h1>
-        <CardDescription>Organize e acompanhe suas atividades diárias</CardDescription>
-      </CardHeader>
+    <Card className="h-screen w-[800px] bg-white flex flex-col shadow-lg rounded-2xl overflow-hidden p-6">
+      <main className="flex-1">
+        <div className="mx-auto w-full">
+           <section className="mb-8">
+            <h1 className="text-4xl font-bold text-foreground mb-2">Minhas Tarefas</h1>
+            <p className="text-muted-foreground">Organize e acompanhe suas atividades diárias</p>
+          </section>
 
-      <CardContent>
-        {/* Loader */}
-        {loading && (
-          <div className="flex justify-center items-center mt-10">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-          </div>
-        )}
+           <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <ResultCards label="Total" icon={<Circle className="h-6 w-6 text-primary" />} iconBg="bg-primary/10" value={tarefas.length} />
+            <ResultCards label="Ativas" icon={<Circle className="h-6 w-6 text-chart-4" />} iconBg="bg-chart-4/10" value={tarefas.filter(t => t.ativo === 1).length} />
+            <ResultCards label="Concluídas" icon={<CheckCircle2 className="h-6 w-6 text-chart-2" />} iconBg="bg-chart-2/10" value={tarefas.filter(t => t.status === "concluida").length} />
+          </section>
 
-        {/* Cards de resumo */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="flex bg-gray-200 p-4 justify-between rounded-lg">
-            <div className="flex-col text-center p-2">
-              <div className="text-lg text-gray-500 font-bold">Total</div>
-              <div className="text-2xl font-bold">{tarefas.length}</div>
-            </div>
-            <div className="flex items-center">
-              <Circle />
-            </div>
-          </div>
+  <div className="flex flex-col md:flex-row gap-3 mb-6">
+<PesquisaTarefa></PesquisaTarefa>
+  <Button onClick={abrirModalCriacao} size="lg">
+    <Plus className="h-5 w-5 mr-2" />
+    Adicionar Tarefa
+  </Button>
+</div>
 
-          <div className="flex bg-gray-200 p-4 justify-between rounded-lg">
-            <div className="flex-col text-center p-2">
-              <div className="text-lg text-gray-500 font-bold">Ativas</div>
-              <div className="text-2xl font-bold">{tarefas.filter((t) => t.ativo === 1).length}</div>
+           {loading ? (
+            <div className="flex justify-center items-center mt-10">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
             </div>
-            <div className="flex items-center">
-              <Circle />
-            </div>
-          </div>
-
-          <div className="flex bg-gray-200 p-4 justify-between rounded-lg">
-            <div className="flex-col text-center p-2">
-              <div className="text-lg text-gray-500 font-bold">Concluídas</div>
-              <div className="text-2xl font-bold">{tarefas.filter((t) => t.status === "concluida").length}</div>
-            </div>
-            <div className="flex items-center">
-              <Circle />
-            </div>
-          </div>
-        </div>
-
-        {/* Campo e botão de nova tarefa */}
-        <div className="flex h-[100px] overflow-hidden min-w-[750px] bg-gray-200 rounded-lg mt-5 items-center justify-center">
-          <div className="flex gap-3">
-            <Input
-              placeholder="Pesquisar Tarefa..."
-              value={termo}
-              onChange={(e) => setTermo(e.target.value)}
-              className="bg-white w-[550px]" />
-            <Search onClick={handlePesquisar} className="h-4 w-4">Buscar</Search>
-            <Button onClick={abrirModalCriacao} className="bg-primary text-white">
-              Adicionar
-            </Button>
-          </div>
-        </div>
-
-        {/* Lista de tarefas */}
-        <div className="bg-white h-full mt-5 overflow-y-auto max-h-[450px]">
-          {tarefas.length === 0 ? (
-            <div className="text-center text-gray-500 p-4">Nenhuma tarefa encontrada.</div>
           ) : (
-            tarefas.map((tarefa) => (
-              <div
-                key={tarefa.id_tarefa}
-                className="flex justify-between m-3 h-[80px] bg-gray-100 rounded-lg items-center px-3"
-              >
-                <div className="flex gap-2 items-center">
-                  <RoundCheckbox
-                    checked={tarefa.status === "concluida"}
-                    onChange={() => handleConcluirTarefa(tarefa.id_tarefa, tarefa.status)}
-                  />
+   <div className="bg-white h-full mt-15 overflow-y-auto max-h-[480px] rounded-lg pr-2">
+  {tarefas.length === 0 ? (
+    <Card className="p-12 text-center overflow-hidden">
+      <p className="text-muted-foreground truncate">Nenhuma tarefa encontrada</p>
+    </Card>
+  ) : (
+    tarefas.map((tarefa) => (
+      
+      <TarefasCard
+        key={tarefa.id_tarefa}
+        id={tarefa.id_tarefa}
+        titulo={tarefa.titulo}
+        importancia={tarefa.importancia as "baixa" | "media" | "alta"}
+        status={tarefa.status}
+        onConcluir={handleConcluirTarefa}
+        onEditar={() => abrirModalEdicao(tarefa)}
+        onExcluir={() => handleCancel(tarefa.id_tarefa)}
+      />
+    ))
+  )}
+</div>
 
-                  <h2
-
-                    className={tarefa.status === "concluida" ? "text-gray-400 line-through" : "text-lg font-semibold text-gray-700"}   >{tarefa.titulo}</h2>
-
-
-                </div>
-                <div className="flex gap-3 items-center">
-                  <span className="text-sm font-medium capitalize">{tarefa.importancia}</span>
-
-                  <SquarePen
-                    className="h-4 w-4 cursor-pointer text-blue-500 hover:text-blue-700 transition"
-                    onClick={() => abrirModalEdicao(tarefa)}
-                  />
-
-                  <Trash
-                    className="h-4 w-4 cursor-pointer text-red-500 hover:text-red-700 transition"
-                    onClick={() => handleCancel(tarefa.id_tarefa)}
-
-                  />
-                </div>
-              </div>
-            ))
           )}
         </div>
+      </main>
 
-        {/* Modal de criação/edição */}
-        <Modal
-          open={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={(dados) =>
-            handleCriarOuAtualizar(dados.titulo, dados.importancia, dados.status, dados.ativo)
-          }
-          modoEdicao={modoEdicao}
-          tarefa={tarefaSelecionada}
-        />
-      </CardContent>
+      <Modal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={(dados) =>
+          handleCriarOuAtualizar(dados.titulo, dados.importancia, dados.status, dados.ativo)
+        }
+        modoEdicao={modoEdicao}
+        tarefa={tarefaSelecionada}
+      />
     </Card>
   );
 };
+
+ 

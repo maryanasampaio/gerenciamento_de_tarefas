@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { UsuarioViewModel } from "../viewmodel/UsuarioViewModel";
 
 export const ConfigUsuarioView = () => {
@@ -15,7 +16,7 @@ export const ConfigUsuarioView = () => {
     setSenha,
     loading,
     handleAtualizarUsuario,
-    handleCancelAtualizacao
+    handleCancelAtualizacao,
   } = UsuarioViewModel();
 
   if (loading) {
@@ -23,46 +24,71 @@ export const ConfigUsuarioView = () => {
   }
 
   return (
-    <Card className="items-center justify-center h-[550px] w-[600px] mx-auto mt-10 shadow-lg">
-      <CardHeader>
-        <h1 className="text-3xl font-bold text-center mt-6">Configurações do Usuário</h1>
-      </CardHeader>
+       <Card className="w-full max-w-xl p-6 shadow-lg rounded-2xl">
+        <CardHeader>
+          <h1 className="text-3xl font-bold text-center text-foreground">Configurações do Usuário</h1>
+          <p className="text-sm text-muted-foreground text-center mt-1">
+            Atualize suas informações pessoais
+          </p>
+        </CardHeader>
 
-      <CardContent className="flex flex-col gap-4 m-[20px] mt-10 items-center">
-        <Input
-          type="text"
-          placeholder="Nome completo"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-        />
-        <Input
-          type="text"
-          placeholder="Usuário"
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
-        />
-        <Input
-          type="email"
-          placeholder="E-mail"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <Input
-          type="password"
-          placeholder="Nova senha "
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-        />
-      </CardContent>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleAtualizarUsuario();
+          }}
+        >
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome completo</Label>
+              <Input
+                id="nome"
+                type="text"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+              />
+            </div>
 
-      <CardFooter className="flex justify-end gap-3 w-full px-8">
-        <Button variant="ghost" onClick={handleCancelAtualizacao}>
-          Cancelar
-        </Button>
-        <Button variant="default" onClick={handleAtualizarUsuario}>
-          Atualizar
-        </Button>
-      </CardFooter>
-    </Card>
-  );
+            <div className="space-y-2">
+              <Label htmlFor="usuario">Usuário</Label>
+              <Input
+                id="usuario"
+                type="text"
+                value={usuario}
+                onChange={(e) => setUsuario(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="senha">Nova senha</Label>
+              <Input
+                id="senha"
+                type="password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+              />
+            </div>
+          </CardContent>
+
+          <CardFooter className="flex justify-end gap-4 mt-4">
+            <Button type="button" variant="ghost" onClick={handleCancelAtualizacao}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="default">
+              Salvar Alterações
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
+   );
 };

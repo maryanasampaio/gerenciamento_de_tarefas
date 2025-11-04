@@ -1,37 +1,55 @@
 import { LoginViewModel } from "@/features/auth/viewmodel/AuthViewModel";
-import { UserIcon } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { LogOut, Settings, User, UserIcon } from "lucide-react";
+import { Button } from "../ui/button";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 export const Header = () => {
-
-
-  const {
-    handleLogout
-  } = LoginViewModel();
+  const { user, logout } = useAuth();
 
 
 
+ return (
+    <header className="border-b border-border bg-card ">
+      <div className="">
+        <div className="flex items-center justify-between mx-auto max-w-full px-10 py-4">
+          <Link to="/pagina-inicial">
+                    <h1 className="text-2xl font-bold text-foreground">TaskFlow</h1>
 
-  const handleMenu = () => {
-    console.log('clicou!!!!!')
-  }
+          </Link>
 
-
-  return (
-    <>
-      <header className="bg-white-600 text-white py-4 px-8 shadow-md">
-        <div className="flex gap-3 justify-between" >
-          <h2 className="text-black">Task</h2>
-          <div className="flex gap-2 items-center">
-            <UserIcon className="text-black h-6 w-6" onClick={handleLogout}></UserIcon>
-            <div onClick={handleMenu}>
-              <h2 className="text-black">nome do usuário</h2>
-
-            </div>
-          </div>
-
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="h-4 w-4 text-primary" />
+                </div>
+                <span className="font-medium">{user}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <Link to={"/config-usuario"}>
+                  <DropdownMenuItem >
+                <Settings className="mr-2 h-4 w-4" />
+                Configurações
+              </DropdownMenuItem></Link>
+          
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout} className="text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      </header>
-    </>
-
+      </div>
+    </header>
   );
 }

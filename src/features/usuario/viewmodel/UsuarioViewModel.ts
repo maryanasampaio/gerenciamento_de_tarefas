@@ -61,6 +61,7 @@ export function UsuarioViewModel() {
       if (response) {
         setError(false);
         alert('Usuário criado com sucesso!');
+        setLoading(true);
         navigate('/login');
       }
     } catch (error: any) {
