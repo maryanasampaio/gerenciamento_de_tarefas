@@ -97,8 +97,8 @@ No diretório do projeto, você pode executar:
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/taskflow-frontend.git
-cd taskflow-frontend
+git clone https://github.com/maryanasampaio/gerenciamento_de_tarefas.git
+cd gerenciamento_de_tarefas-frontend
 ```
 
 ### 2. Instalar dependências
@@ -111,5 +111,6 @@ npm install
 ```bash
 npm run dev
 ```
-
+Rodará em: 
+http://localhost:5173
 
