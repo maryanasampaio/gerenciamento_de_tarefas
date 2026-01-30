@@ -23,14 +23,13 @@ export function LoginViewModel() {
       // 2️⃣ checa se o cookie está válido e atualiza o contexto
       const ok = await checkAuth();
 
-      if (ok) {
-        navigate("/pagina-inicial");
-      } else {
-        alert("Falha ao autenticar sessão");
+      if (!ok) {
+        throw new Error("Falha ao autenticar sessão");
       }
+      // Não navegar aqui - deixar o LoginView controlar
     } catch (err: any) {
       setError(err.message || "Erro inesperado");
-      alert(err.message);
+      throw err; // Re-throw para o LoginView capturar
     } finally {
       setLoading(false);
     }

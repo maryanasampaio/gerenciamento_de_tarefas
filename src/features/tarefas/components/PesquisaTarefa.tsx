@@ -23,11 +23,11 @@ const {
       onKeyDown={(e) => {
         if (e.key === 'Enter') handlePesquisar();
       }}
-      className="w-full pl-4 pr-10 py-2 border border-border rounded-lg bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+      className="w-full h-12 pl-5 pr-12 border-2 border-border rounded-xl bg-card text-foreground text-base placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm"
     />
     <Search
       onClick={handlePesquisar}
-      className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground cursor-pointer hover:text-primary transition-colors"
+      className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground cursor-pointer hover:text-primary transition-colors"
     />
   </div>
 

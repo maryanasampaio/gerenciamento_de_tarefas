@@ -1,94 +1,330 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UsuarioViewModel } from "../viewmodel/UsuarioViewModel";
+import { Sidebar } from "@/components/Sidebar/Sidebar";
+import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
+import { 
+  User, 
+  Bell, 
+  Moon, 
+  Sun, 
+  Mail, 
+  MessageSquare,
+  Smartphone,
+  Save,
+  CheckCircle2
+} from "lucide-react";
 
 export const ConfigUsuarioView = () => {
-  const {
-    nome,
-    setNome,
-    usuario,
-    setUsuario,
-    email,
-    setEmail,
-    senha,
-    setSenha,
-    loading,
-    handleAtualizarUsuario,
-    handleCancelAtualizacao,
-  } = UsuarioViewModel();
+  const { user } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [modoEscuro, setModoEscuro] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved === 'true';
+  });
+  const [notificacaoApp, setNotificacaoApp] = useState(true);
+  const [notificacaoEmail, setNotificacaoEmail] = useState(false);
+  const [notificacaoWhatsApp, setNotificacaoWhatsApp] = useState(false);
+  const [emailNotificacao, setEmailNotificacao] = useState("");
+  const [telefoneWhatsApp, setTelefoneWhatsApp] = useState("");
+  
+  // Dados do usuário
+  const [nome, setNome] = useState(user?.nome || "");
+  const [usuario, setUsuario] = useState(user?.usuario || "");
 
-  if (loading) {
-    return <div className="text-center mt-10 text-gray-500">Carregando...</div>;
-  }
+  const handleSalvarPreferencias = () => {
+    // Aqui você implementaria a lógica para salvar no backend
+    alert("Preferências salvas com sucesso!");
+  };
+
+  const toggleModoEscuro = () => {
+    const novoModo = !modoEscuro;
+    setModoEscuro(novoModo);
+    document.documentElement.classList.toggle('dark');
+    localStorage.setItem('darkMode', novoModo.toString());
+  };
 
   return (
-       <Card className="w-full max-w-xl p-6 shadow-lg rounded-2xl">
-        <CardHeader>
-          <h1 className="text-3xl font-bold text-center text-foreground">Configurações do Usuário</h1>
-          <p className="text-sm text-muted-foreground text-center mt-1">
-            Atualize suas informações pessoais
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 dark:from-slate-950 dark:via-gray-950 dark:to-slate-900 relative overflow-hidden">
+      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+
+      <main
+        className={`transition-all duration-300 ease-in-out ${
+          sidebarOpen ? "ml-64" : "ml-20"
+        } p-6 md:p-8 relative z-10`}
+      >
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Configurações
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400">
+            Gerencie sua conta e preferências
           </p>
-        </CardHeader>
+        </div>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleAtualizarUsuario();
-          }}
-        >
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="nome">Nome completo</Label>
-              <Input
-                id="nome"
-                type="text"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-              />
-            </div>
+        <div className="grid gap-6 md:grid-cols-2 max-w-6xl">
+          {/* Informações Pessoais */}
+          <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+            <CardHeader className="border-b border-gray-200 dark:border-slate-700 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                  <User className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Informações Pessoais
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Seus dados da conta
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="pt-6 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="nome" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Nome Completo
+                </Label>
+                <Input
+                  id="nome"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  className="h-10 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="usuario">Usuário</Label>
-              <Input
-                id="usuario"
-                type="text"
-                value={usuario}
-                onChange={(e) => setUsuario(e.target.value)}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="usuario" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Usuário
+                </Label>
+                <Input
+                  id="usuario"
+                  value={usuario}
+                  onChange={(e) => setUsuario(e.target.value)}
+                  className="h-10 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  E-mail
+                </Label>
+                <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-slate-800 p-3 rounded-md">
+                  {user?.email || "Não disponível"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-            <div className="space-y-2">
-              <Label htmlFor="senha">Nova senha</Label>
-              <Input
-                id="senha"
-                type="password"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-              />
-            </div>
-          </CardContent>
+          {/* Preferências de Aparência */}
+          <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+            <CardHeader className="border-b border-gray-200 dark:border-slate-700 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                  {modoEscuro ? (
+                    <Moon className="h-6 w-6 text-white" />
+                  ) : (
+                    <Sun className="h-6 w-6 text-white" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Aparência
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Personalize o visual
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                <div className="flex items-center gap-3">
+                  {modoEscuro ? (
+                    <Moon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  ) : (
+                    <Sun className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  )}
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      Modo Escuro
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {modoEscuro ? "Tema escuro ativado" : "Tema claro ativado"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={toggleModoEscuro}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    modoEscuro ? "bg-cyan-600" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      modoEscuro ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+            </CardContent>
+          </Card>
 
-          <CardFooter className="flex justify-end gap-4 mt-4">
-            <Button type="button" variant="ghost" onClick={handleCancelAtualizacao}>
-              Cancelar
-            </Button>
-            <Button type="submit" variant="default">
-              Salvar Alterações
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
-   );
+          {/* Preferências de Notificação */}
+          <Card className="md:col-span-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+            <CardHeader className="border-b border-gray-200 dark:border-slate-700 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                  <Bell className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Notificações
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Como deseja ser notificado
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="pt-6 space-y-4">
+              {/* Notificação do App */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Smartphone className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      Notificações do Aplicativo
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Receba notificações push diretamente no app
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setNotificacaoApp(!notificacaoApp)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    notificacaoApp ? "bg-cyan-600" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      notificacaoApp ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Notificação por E-mail */}
+              <div className="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        Notificações por E-mail
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Receba lembretes por e-mail
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setNotificacaoEmail(!notificacaoEmail)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      notificacaoEmail ? "bg-cyan-600" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        notificacaoEmail ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+                
+                {notificacaoEmail && (
+                  <div className="space-y-2 pl-8">
+                    <Label htmlFor="emailNotif" className="text-sm text-gray-600 dark:text-gray-400">
+                      E-mail para notificações
+                    </Label>
+                    <Input
+                      id="emailNotif"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={emailNotificacao}
+                      onChange={(e) => setEmailNotificacao(e.target.value)}
+                      className="h-9 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Notificação por WhatsApp */}
+              <div className="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <MessageSquare className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        Notificações por WhatsApp
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Receba lembretes via WhatsApp
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setNotificacaoWhatsApp(!notificacaoWhatsApp)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      notificacaoWhatsApp ? "bg-cyan-600" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        notificacaoWhatsApp ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+                
+                {notificacaoWhatsApp && (
+                  <div className="space-y-2 pl-8">
+                    <Label htmlFor="whatsapp" className="text-sm text-gray-600 dark:text-gray-400">
+                      Número do WhatsApp
+                    </Label>
+                    <Input
+                      id="whatsapp"
+                      type="tel"
+                      placeholder="(00) 00000-0000"
+                      value={telefoneWhatsApp}
+                      onChange={(e) => setTelefoneWhatsApp(e.target.value)}
+                      className="h-9 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700"
+                    />
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Botão Salvar */}
+        <div className="max-w-6xl mt-6">
+          <Button
+            onClick={handleSalvarPreferencias}
+            className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg shadow-cyan-500/30 transition-all duration-300 h-11"
+          >
+            <Save className="mr-2 h-5 w-5" />
+            Salvar Preferências
+          </Button>
+        </div>
+      </main>
+    </div>
+  );
 };
