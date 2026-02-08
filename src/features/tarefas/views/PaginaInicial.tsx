@@ -5,6 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { TarefaViewModel } from "../viewmodel/TarefaViewModel";
+import { getTopRecentItems } from "@/lib/recentItems";
+import type { RecentItem } from "@/lib/recentItems";
 import {
   CalendarDays,
   Calendar,
@@ -13,7 +15,11 @@ import {
   Circle,
   Sparkles,
   Moon,
-  Sun
+  Sun,
+  ChevronLeft,
+  ChevronRight,
+  Target,
+  CheckCircle2
 } from "lucide-react";
 
 export const PaginaInicial: React.FC = () => {
@@ -26,6 +32,21 @@ export const PaginaInicial: React.FC = () => {
     const saved = localStorage.getItem('darkMode');
     return saved === 'true';
   });
+
+  // Função para formatar tempo relativo
+  const formatarTempoRelativo = (timestamp: number): string => {
+    const agora = Date.now();
+    const diff = agora - timestamp;
+    const segundos = Math.floor(diff / 1000);
+    const minutos = Math.floor(segundos / 60);
+    const horas = Math.floor(minutos / 60);
+    const dias = Math.floor(horas / 24);
+
+    if (dias > 0) return dias === 1 ? 'há 1 dia' : `há ${dias} dias`;
+    if (horas > 0) return horas === 1 ? 'há 1 hora' : `há ${horas} horas`;
+    if (minutos > 0) return minutos === 1 ? 'há 1 min' : `há ${minutos} min`;
+    return 'agora mesmo';
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem('darkMode');
@@ -42,25 +63,31 @@ export const PaginaInicial: React.FC = () => {
     localStorage.setItem('darkMode', novoModo.toString());
   };
 
-  // Função para ordenar tarefas por importância
-  const ordenarPorImportancia = (tarefasList: any[]) => {
-    const prioridades = { alta: 1, media: 2, baixa: 3 };
-    return [...tarefasList].sort((a, b) => {
-      const prioridadeA = prioridades[a.importancia as keyof typeof prioridades] || 4;
-      const prioridadeB = prioridades[b.importancia as keyof typeof prioridades] || 4;
-      
-      // Se a prioridade for diferente, ordenar por prioridade
-      if (prioridadeA !== prioridadeB) {
-        return prioridadeA - prioridadeB;
-      }
-      
-      // Se a prioridade for igual, ordenar por ID (mais recente primeiro)
-      return (b.id_tarefa || 0) - (a.id_tarefa || 0);
-    });
-  };
+  // Itens recentes (metas e tarefas clicadas recentemente)
+  const [itensRecentes, setItensRecentes] = useState<RecentItem[]>([]);
 
-  // Tarefas recentes (máximo 4) ordenadas por importância
-  const tarefasRecentes = ordenarPorImportancia(tarefas).slice(0, 4);
+  useEffect(() => {
+    // Atualiza a lista de itens recentes quando o componente monta
+    const items = getTopRecentItems(4);
+    setItensRecentes(items);
+
+    // Atualiza quando há mudanças no localStorage (via evento customizado)
+    const handleRecentItemsChange = () => {
+      const updatedItems = getTopRecentItems(4);
+      setItensRecentes(updatedItems);
+    };
+
+    // Listener para mudanças no localStorage de outros componentes
+    window.addEventListener('storage', handleRecentItemsChange);
+    
+    // Listener customizado para mudanças na mesma aba
+    window.addEventListener('recentItemsChanged', handleRecentItemsChange);
+
+    return () => {
+      window.removeEventListener('storage', handleRecentItemsChange);
+      window.removeEventListener('recentItemsChanged', handleRecentItemsChange);
+    };
+  }, []);
 
   // Funções do calendário
   const getDaysInMonth = (date: Date) => {
@@ -95,6 +122,18 @@ export const PaginaInicial: React.FC = () => {
     const month = currentMonth.getMonth();
     const dateStr = `${day.toString().padStart(2, '0')}/${(month + 1).toString().padStart(2, '0')}/${year}`;
     navigate(`/metas-diarias?data=${dateStr}`);
+  };
+
+  const mesAnterior = () => {
+    const novaData = new Date(currentMonth);
+    novaData.setMonth(novaData.getMonth() - 1);
+    setCurrentMonth(novaData);
+  };
+
+  const mesPosterior = () => {
+    const novaData = new Date(currentMonth);
+    novaData.setMonth(novaData.getMonth() + 1);
+    setCurrentMonth(novaData);
   };
 
   const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
@@ -157,55 +196,75 @@ export const PaginaInicial: React.FC = () => {
         {/* Grid Principal */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Tarefas Recentes - 4 tarefas visíveis */}
-          <Card className="p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+          <Card className="p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 hover:border-gray-300/70 dark:hover:border-gray-600/70 transition-all duration-200">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <ListTodo className="h-5 w-5 text-cyan-600" />
-              Tarefas Recentes
+              Itens Recentes
             </h2>
             
-            {tarefasRecentes.length === 0 ? (
+            {itensRecentes.length === 0 ? (
               <div className="text-center py-8">
                 <Circle className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                 <p className="text-gray-500 dark:text-gray-400">
-                  Nenhuma tarefa criada ainda
+                  Nenhum item acessado ainda
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {tarefasRecentes.map((tarefa) => (
+                {itensRecentes.map((item) => (
                   <Card 
-                    key={tarefa.id_tarefa}
-                    className="p-3 bg-gradient-to-br from-gray-50 to-white dark:from-slate-800 dark:to-slate-900 border-l-4 hover:shadow-md transition-shadow duration-200"
+                    key={`${item.tipo}-${item.id}`}
+                    onClick={() => {
+                      if (item.tipo === 'meta') {
+                        navigate(`/metas/${item.id}`);
+                      } else {
+                        navigate('/tarefas');
+                      }
+                    }}
+                    className="p-3 bg-gradient-to-br from-gray-50 to-white dark:from-slate-800 dark:to-slate-900 border-l-4 hover:shadow-md transition-all duration-200 cursor-pointer"
                     style={{
-                      borderLeftColor: tarefa.status === "concluida"
+                      borderLeftColor: item.tipo === 'meta'
+                        ? "rgb(14, 165, 233)"
+                        : item.status === "concluida"
                         ? "rgb(16, 185, 129)"
-                        : tarefa.status === "andamento"
+                        : item.status === "andamento"
                         ? "rgb(6, 182, 212)"
                         : "rgb(251, 191, 36)",
                     }}
                   >
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 line-clamp-1">
-                      {tarefa.titulo}
-                    </h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">
-                      {tarefa.descricao}
-                    </p>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start gap-2 mb-2">
+                      {item.tipo === 'meta' ? (
+                        <Target className="h-4 w-4 text-sky-600 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4 text-cyan-600 flex-shrink-0 mt-0.5" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">
+                          {item.titulo}
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          {formatarTempoRelativo(item.timestamp)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between ml-6">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        tarefa.status === "concluida"
+                        item.tipo === 'meta'
+                          ? "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400"
+                          : item.status === "concluida"
                           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : tarefa.status === "andamento"
+                          : item.status === "andamento"
                           ? "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400"
                           : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                       }`}>
-                        {tarefa.status === "concluida"
+                        {item.tipo === 'meta' 
+                          ? 'Meta' 
+                          : item.status === "concluida"
                           ? "Concluída"
-                          : tarefa.status === "andamento"
+                          : item.status === "andamento"
                           ? "Em Andamento"
                           : "Pendente"}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {tarefa.data}
                       </span>
                     </div>
                   </Card>
@@ -215,11 +274,31 @@ export const PaginaInicial: React.FC = () => {
           </Card>
 
           {/* Calendário do Mês */}
-          <Card className="p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-cyan-600" />
-              {currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-            </h2>
+          <Card className="p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 hover:border-gray-300/70 dark:hover:border-gray-600/70 transition-all duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-cyan-600" />
+                {currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+              </h2>
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={mesAnterior}
+                  className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={mesPosterior}
+                  className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
             
             <div className="grid grid-cols-7 gap-1 mb-2">
               {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
@@ -297,7 +376,7 @@ export const PaginaInicial: React.FC = () => {
           {/* Metas Diárias */}
           <Card 
             onClick={() => navigate('/metas-diarias')}
-            className="p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 cursor-pointer group border-t-4 border-t-cyan-500"
+            className="p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 hover:border-cyan-300/70 dark:hover:border-cyan-600/70 hover:shadow-xl transition-all duration-300 cursor-pointer group border-t-4 border-t-cyan-500"
           >
             <div className="flex items-center gap-4 mb-4">
               <div className="h-14 w-14 rounded-full bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -324,7 +403,7 @@ export const PaginaInicial: React.FC = () => {
           {/* Metas Mensais */}
           <Card 
             onClick={() => navigate('/metas-mensais')}
-            className="p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 cursor-pointer group border-t-4 border-t-blue-500"
+            className="p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 hover:border-blue-300/70 dark:hover:border-blue-600/70 hover:shadow-xl transition-all duration-300 cursor-pointer group border-t-4 border-t-blue-500"
           >
             <div className="flex items-center gap-4 mb-4">
               <div className="h-14 w-14 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -351,7 +430,7 @@ export const PaginaInicial: React.FC = () => {
           {/* Metas Anuais */}
           <Card 
             onClick={() => navigate('/metas-anuais')}
-            className="p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 cursor-pointer group border-t-4 border-t-indigo-500"
+            className="p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 hover:border-indigo-300/70 dark:hover:border-indigo-600/70 hover:shadow-xl transition-all duration-300 cursor-pointer group border-t-4 border-t-indigo-500"
           >
             <div className="flex items-center gap-4 mb-4">
               <div className="h-14 w-14 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">

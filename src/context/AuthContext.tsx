@@ -28,19 +28,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const checkAuth = async (): Promise<boolean> => {
     try {
-      const response = await api.get("/auth/usuario", { withCredentials: true });
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        setUser(null);
+        return false;
+      }
 
-      if (response.status === 200 && response.data?.dados?.usuario) {
-        setUser(response.data.dados.usuario);
-        localStorage.setItem("user", JSON.stringify(response.data.dados.usuario));
+      const response = await api.get("/auth/me");
+
+      if (response.status === 200 && response.data?.usuario) {
+        setUser(response.data.usuario);
+        localStorage.setItem("user", JSON.stringify(response.data.usuario));
         return true;
       } else {
         setUser(null);
         localStorage.removeItem("user");
+        localStorage.removeItem("access_token");
       }
     } catch {
       setUser(null);
       localStorage.removeItem("user");
+      localStorage.removeItem("access_token");
     }
     return false;
   };
@@ -79,12 +87,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const logout = async () => {
     try {
-      await api.post("/auth/logout", {}, { withCredentials: true });
+      await api.post("/auth/logout");
     } catch {
       /* ignora erros de logout */
     } finally {
       setUser(null);
       localStorage.removeItem("user");
+      localStorage.removeItem("access_token");
     }
   };
 

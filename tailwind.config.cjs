@@ -11,8 +11,25 @@ module.exports = {
         'blob-slower': 'blob-slower 12s ease-in-out infinite',
         'slideIn': 'slideIn 0.6s ease forwards',
         'float': 'float 6s ease-in-out infinite',
+        'bounce-in': 'bounce-in 0.6s ease-out',
       },
       keyframes: {
+        'bounce-in': {
+          '0%': {
+            opacity: '0',
+            transform: 'scale(0.3) translateY(-100px)',
+          },
+          '50%': {
+            opacity: '1',
+            transform: 'scale(1.05)',
+          },
+          '70%': {
+            transform: 'scale(0.9)',
+          },
+          '100%': {
+            transform: 'scale(1) translateY(0)',
+          },
+        },
         float: {
           '0%, 100%': {
             transform: 'translateY(0px) rotate(0deg)',

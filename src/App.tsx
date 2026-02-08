@@ -12,6 +12,7 @@ import { LandingPage } from "./features/landing/LandingPage";
 import { MetasDiarias } from "./features/metas/views/MetasDiarias";
 import { MetasMensais } from "./features/metas/views/MetasMensais";
 import { MetasAnuais } from "./features/metas/views/MetasAnuais";
+import { MetaDetalhes } from "./features/metas/views/MetaDetalhes";
 import { ComoUsar } from "./features/ajuda/ComoUsar";
 
 function AppRoutes() {
@@ -65,6 +66,15 @@ function AppRoutes() {
           element={
             <RouteGuard>
               <MetasAnuais />
+            </RouteGuard>
+          }
+        />
+
+        <Route
+          path="/metas/:id"
+          element={
+            <RouteGuard>
+              <MetaDetalhes />
             </RouteGuard>
           }
         />

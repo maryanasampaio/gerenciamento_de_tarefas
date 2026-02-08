@@ -1,5 +1,5 @@
-import { Navigate } from "react-router-dom";
 import { Repository } from "../repository/AuthRepository";
+import { AuthResponse } from "../models/AuthModel";
 
 export class AuthUseCase {
   private repository: Repository;
@@ -8,35 +8,16 @@ export class AuthUseCase {
     this.repository = new Repository();
   }
 
-
-  async execute(usuario: string, senha: string) {
-
+  async execute(usuario: string, senha: string): Promise<AuthResponse> {
     if (!usuario || !senha) {
       throw new Error("Usuário e senha são obrigatórios");
     }
 
     const response = await this.repository.login(usuario, senha);
-
-    if (response.status >= 400) {
-      throw new Error(response.mensagem || "Erro no login");
-    }
-    return response.dados?.usuario;
-
+    return response;
   }
 
-  async logout() {
-    try {
-      const response = await this.repository.logout();
-
-      if (response.status !== 200) {
-        throw new Error(response.mensagem || "Erro ao fazer logout");
-      }
-
-      return true;
-
-    } catch (error: any) {
-      throw new Error(error.response.mensagem || "Erro ao fazer logout");
-    }
-
+  async logout(): Promise<void> {
+    await this.repository.logout();
   }
 }

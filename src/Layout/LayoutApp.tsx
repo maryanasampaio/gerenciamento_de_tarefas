@@ -1,6 +1,5 @@
 // src/Layout/LayoutApp.tsx
 import { Footer } from "@/components/Footer/Footer";
-import { Header } from "@/components/Header/Header";
 import { useAuth } from "@/context/AuthContext";
 import { ReactNode, useState, useEffect } from "react";
 import { TaskAnimation } from "@/components/TaskAnimation/TaskAnimation";
@@ -92,8 +91,6 @@ export const LayoutApp = ({ children, currentPath = '' }: LayoutProps) => {
       <ProgressCircle position="bottom-right" targetProgress={60} delay={1500} />
 
       <div className="relative z-10 flex flex-col min-h-screen">
-        {isAuthenticated && !hideHeaderFooter && <Header />}
-
         <main className={`flex-1 ${hideHeaderFooter ? '' : 'p-4'}`}>
           {hideHeaderFooter ? (
             children

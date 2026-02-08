@@ -17,19 +17,11 @@ export function LoginViewModel() {
     setLoading(true);
     setError(null);
     try {
-      // 1️⃣ faz login no backend (gera o cookie)
-      await loginUseCase.execute(usuario, senha);
-
-      // 2️⃣ checa se o cookie está válido e atualiza o contexto
-      const ok = await checkAuth();
-
-      if (!ok) {
-        throw new Error("Falha ao autenticar sessão");
-      }
-      // Não navegar aqui - deixar o LoginView controlar
+      const response = await loginUseCase.execute(usuario, senha);
+      await login(response.usuario);
     } catch (err: any) {
       setError(err.message || "Erro inesperado");
-      throw err; // Re-throw para o LoginView capturar
+      throw err;
     } finally {
       setLoading(false);
     }

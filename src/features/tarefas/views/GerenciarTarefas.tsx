@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Sidebar } from "@/components/Sidebar/Sidebar";
 import { useState, useEffect } from "react";
+import { addRecentItem } from "@/lib/recentItems";
 import {
   Circle,
   Loader2,
@@ -168,7 +169,7 @@ export const GerenciarTarefas: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="p-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-l-4 border-l-amber-500 hover:shadow-lg transition-shadow duration-300">
+          <Card className="p-5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-l-4 border-l-amber-500 hover:shadow-lg transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-amber-300/70 dark:hover:border-amber-700/70">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
@@ -184,7 +185,7 @@ export const GerenciarTarefas: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="p-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-l-4 border-l-cyan-500 hover:shadow-lg transition-shadow duration-300">
+          <Card className="p-5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-l-4 border-l-cyan-500 hover:shadow-lg transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-cyan-300/70 dark:hover:border-cyan-700/70">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
@@ -200,7 +201,7 @@ export const GerenciarTarefas: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="p-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-l-4 border-l-emerald-500 hover:shadow-lg transition-shadow duration-300">
+          <Card className="p-5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-l-4 border-l-emerald-500 hover:shadow-lg transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-emerald-300/70 dark:hover:border-emerald-700/70">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
@@ -218,7 +219,7 @@ export const GerenciarTarefas: React.FC = () => {
         </div>
 
         {/* Filters and Search */}
-        <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm mb-6">
+        <Card className="p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md mb-6 border border-gray-200/50 dark:border-gray-700/50 shadow-sm">
           <div className="flex flex-col md:flex-row gap-4 items-center">
             {/* Filters */}
             <div className="flex gap-2 flex-wrap">
@@ -275,7 +276,7 @@ export const GerenciarTarefas: React.FC = () => {
               <Loader2 className="h-8 w-8 animate-spin text-cyan-600" />
             </div>
           ) : tarefasOrdenadas.length === 0 ? (
-            <Card className="p-12 text-center bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm">
+            <Card className="p-12 text-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 shadow-sm">
               <div className="flex flex-col items-center justify-center">
                 <ListTodo className="h-16 w-16 text-gray-300 dark:text-gray-600 mb-4" />
                 <p className="text-gray-500 dark:text-gray-400 text-lg">
@@ -292,7 +293,7 @@ export const GerenciarTarefas: React.FC = () => {
             tarefasOrdenadas.map((tarefa) => (
               <Card
                 key={tarefa.id_tarefa}
-                className="p-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm hover:shadow-lg transition-all duration-300 border-l-4"
+                className="p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md hover:shadow-xl transition-all duration-300 border-l-4 border border-gray-200/50 dark:border-gray-700/50 hover:border-gray-300/70 dark:hover:border-gray-600/70"
                 style={{
                   borderLeftColor:
                     tarefa.status === "concluida"
@@ -338,7 +339,18 @@ export const GerenciarTarefas: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => abrirModalEdicao(tarefa)}
+                          onClick={() => {
+                            // Adiciona aos itens recentes
+                            addRecentItem({
+                              id: tarefa.id_tarefa,
+                              tipo: 'tarefa',
+                              titulo: tarefa.titulo,
+                              status: tarefa.status,
+                              importancia: tarefa.importancia,
+                              data: tarefa.data
+                            });
+                            abrirModalEdicao(tarefa);
+                          }}
                           className="h-9 w-9 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 dark:text-cyan-400 dark:hover:bg-cyan-900/30"
                         >
                           <SquarePen className="h-4 w-4" />

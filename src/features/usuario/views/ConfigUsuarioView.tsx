@@ -30,12 +30,21 @@ export const ConfigUsuarioView = () => {
   const [emailNotificacao, setEmailNotificacao] = useState("");
   const [telefoneWhatsApp, setTelefoneWhatsApp] = useState("");
   
-  // Dados do usuário
-  const [nome, setNome] = useState(user?.nome || "");
+  // Dados do usuário - separar nome e sobrenome
+  const nomeCompleto = user?.nome || "";
+  const partesNome = nomeCompleto.split(" ");
+  const [primeiroNome, setPrimeiroNome] = useState(partesNome[0] || "");
+  const [sobrenome, setSobrenome] = useState(partesNome.slice(1).join(" ") || "");
   const [usuario, setUsuario] = useState(user?.usuario || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [senhaAtual, setSenhaAtual] = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
 
   const handleSalvarPreferencias = () => {
     // Aqui você implementaria a lógica para salvar no backend
+    const nomeCompleto = `${primeiroNome.trim()} ${sobrenome.trim()}`.trim();
+    console.log("Salvando:", { nomeCompleto, usuario, email });
     alert("Preferências salvas com sucesso!");
   };
 
@@ -86,13 +95,27 @@ export const ConfigUsuarioView = () => {
             
             <CardContent className="pt-6 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="nome" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Nome Completo
+                <Label htmlFor="primeiroNome" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Primeiro Nome
                 </Label>
                 <Input
-                  id="nome"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
+                  id="primeiroNome"
+                  value={primeiroNome}
+                  onChange={(e) => setPrimeiroNome(e.target.value)}
+                  placeholder="Digite seu primeiro nome"
+                  className="h-10 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sobrenome" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Sobrenome
+                </Label>
+                <Input
+                  id="sobrenome"
+                  value={sobrenome}
+                  onChange={(e) => setSobrenome(e.target.value)}
+                  placeholder="Digite seu sobrenome"
                   className="h-10 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700"
                 />
               </div>
@@ -105,17 +128,73 @@ export const ConfigUsuarioView = () => {
                   id="usuario"
                   value={usuario}
                   onChange={(e) => setUsuario(e.target.value)}
+                  placeholder="Escolha um nome de usuário"
                   className="h-10 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   E-mail
                 </Label>
-                <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-slate-800 p-3 rounded-md">
-                  {user?.email || "Não disponível"}
-                </p>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="seu@email.com"
+                  className="h-10 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-gray-200 dark:border-slate-700">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                  Alterar Senha
+                </h3>
+                
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="senhaAtual" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Senha Atual
+                    </Label>
+                    <Input
+                      id="senhaAtual"
+                      type="password"
+                      value={senhaAtual}
+                      onChange={(e) => setSenhaAtual(e.target.value)}
+                      placeholder="Digite sua senha atual"
+                      className="h-10 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="novaSenha" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Nova Senha
+                    </Label>
+                    <Input
+                      id="novaSenha"
+                      type="password"
+                      value={novaSenha}
+                      onChange={(e) => setNovaSenha(e.target.value)}
+                      placeholder="Mínimo 8 caracteres"
+                      className="h-10 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmarSenha" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Confirmar Nova Senha
+                    </Label>
+                    <Input
+                      id="confirmarSenha"
+                      type="password"
+                      value={confirmarSenha}
+                      onChange={(e) => setConfirmarSenha(e.target.value)}
+                      placeholder="Digite novamente a nova senha"
+                      className="h-10 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700"
+                    />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

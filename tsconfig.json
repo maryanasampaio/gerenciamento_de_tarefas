@@ -2,9 +2,11 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
     "strict": true,
     "jsx": "react-jsx",
+    "noEmit": true,
     "baseUrl": "src",
     "paths": {
       "@/*": ["*"]
