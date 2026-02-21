@@ -1,10 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect, isValidElement, cloneElement } from 'react';
-import type { ElementType, ReactElement } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useMetaViewModel } from '../viewmodel/MetaViewModel';
 import { addRecentItem } from '@/lib/recentItems';
@@ -26,9 +24,6 @@ import {
   Cloud,
   Droplets,
   Wind,
-  TrendingUp,
-  Heart,
-  AlertCircle,
   ShoppingCart,
   CheckSquare,
   Film,
@@ -38,10 +33,16 @@ import {
   ChevronUp,
   Activity,
   Dumbbell,
-  Check,
-  FileText
+  Check
 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+
+type ExercicioTreino = {
+  nome: string;
+  series: string;
+  descanso: string;
+  dica?: string;
+};
 
 export const MetaDetalhes: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -53,7 +54,6 @@ export const MetaDetalhes: React.FC = () => {
     atualizarStatusTarefa,
     excluirTarefa,
     excluirMeta,
-    concluirMeta,
     carregarMetaPorId,
     loading
   } = useMetaViewModel();
@@ -67,7 +67,6 @@ export const MetaDetalhes: React.FC = () => {
   const [descricaoTarefa, setDescricaoTarefa] = useState('');
   const [tarefaParaExcluir, setTarefaParaExcluir] = useState<number | null>(null);
   const [showExcluirMetaDialog, setShowExcluirMetaDialog] = useState(false);
-  const [widgetAtivo, setWidgetAtivo] = useState(0);
   const [sugestoesAbertas, setSugestoesAbertas] = useState(true);
   const [mostrarStudyTimer, setMostrarStudyTimer] = useState(false);
   const [mostrarTimerLeitura, setMostrarTimerLeitura] = useState(false);
@@ -76,7 +75,6 @@ export const MetaDetalhes: React.FC = () => {
   const [mostrarShopping, setMostrarShopping] = useState(false);
   const [mostrarCardio, setMostrarCardio] = useState(false);
   const [mostrarWorkout, setMostrarWorkout] = useState(false);
-  const [widgetsVisiveis, setWidgetsVisiveis] = useState<{[key: string]: boolean}>({});
   const [idadeCardio, setIdadeCardio] = useState<string>('');
   const [nivelCardio, setNivelCardio] = useState<string>('');
   const [tipoTreinoCardio, setTipoTreinoCardio] = useState<'curto' | 'longo'>('curto');
@@ -91,7 +89,7 @@ export const MetaDetalhes: React.FC = () => {
 
   useEffect(() => {
     const metaId = Number(id);
-    if (!isNaN(metaId)) {
+    if (!Number.isNaN(metaId)) {
       carregarMetaPorId(metaId);
     }
   }, [id]);
@@ -167,7 +165,7 @@ export const MetaDetalhes: React.FC = () => {
     if (!cardioWidget) return;
 
     let faixaEtaria = '18-30';
-    const idade = parseInt(idadeCardio);
+    const idade = Number.parseInt(idadeCardio);
     if (idade >= 51) {
       faixaEtaria = '51+';
     } else if (idade >= 31) {
@@ -217,7 +215,7 @@ export const MetaDetalhes: React.FC = () => {
     if (!workoutWidget) return;
 
     let faixaEtaria = '18-30';
-    const idade = parseInt(idadeWorkout);
+    const idade = Number.parseInt(idadeWorkout);
     if (idade >= 51) {
       faixaEtaria = '51+';
     } else if (idade >= 31) {
@@ -226,11 +224,11 @@ export const MetaDetalhes: React.FC = () => {
 
     const treinoBase = workoutWidget.data.treinos[nivelWorkout][grupoMuscular][faixaEtaria];
 
-    const exerciciosBase = Array.isArray(treinoBase.exercicios)
-      ? treinoBase.exercicios
+    const exerciciosBase: ExercicioTreino[] = Array.isArray(treinoBase.exercicios)
+      ? (treinoBase.exercicios as ExercicioTreino[])
       : [];
 
-    const exerciciosEmbaralhados = shuffleArray(exerciciosBase);
+    const exerciciosEmbaralhados = shuffleArray<ExercicioTreino>(exerciciosBase);
 
     // Para treino curto, seleciona apenas os principais exercícios; para longo, mantém todos
     const exerciciosSelecionados =
@@ -240,10 +238,10 @@ export const MetaDetalhes: React.FC = () => {
 
     // Para treinos curtos, priorizamos conjugar exercícios (supersets);
     // para treinos longos, mantemos os exercícios isolados bem separados.
-    let exerciciosFinais: any[] = [];
+    let exerciciosFinais: ExercicioTreino[] = [];
 
     if (tipoTreinoWorkout === 'curto') {
-      const exerciciosConjugados: any[] = [];
+      const exerciciosConjugados: ExercicioTreino[] = [];
 
       for (let i = 0; i < exerciciosSelecionados.length; ) {
         const atual = exerciciosSelecionados[i];
@@ -285,27 +283,6 @@ export const MetaDetalhes: React.FC = () => {
     setTreinoWorkoutGerado(treinoPersonalizado);
   };
   
-  const toggleWidget = (key: string) => {
-    setWidgetsVisiveis(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
-  };
-
-  const renderWidgetIcon = (
-    Icon: ElementType | ReactElement<{ className?: string }> | string,
-    className: string
-  ) => {
-    if (typeof Icon === 'string') {
-      return <Lightbulb className={className} />;
-    }
-    if (isValidElement(Icon)) {
-      return cloneElement(Icon as ReactElement<{ className?: string }>, { className });
-    }
-    const Component = Icon as ElementType;
-    return <Component className={className} />;
-  };
-
   const handleAdicionarTarefa = () => {
     if (!tituloTarefa.trim()) {
       alert('Digite um título para a tarefa');
