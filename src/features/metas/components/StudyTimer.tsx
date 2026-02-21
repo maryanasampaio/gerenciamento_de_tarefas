@@ -20,6 +20,54 @@ export function StudyTimer({ onComplete }: StudyTimerProps) {
     longBreak: 15 * 60
   };
 
+  // Restaura estado salvo ao montar (permite que o timer continue contando mesmo ao sair da página)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('studyTimerState');
+      if (!raw) return;
+
+      const saved = JSON.parse(raw) as {
+        mode: 'pomodoro' | 'shortBreak' | 'longBreak';
+        timeLeft: number;
+        isRunning: boolean;
+        pomodorosCompleted: number;
+        lastUpdated: number;
+      };
+
+      const now = Date.now();
+      const elapsedSeconds = Math.floor((now - saved.lastUpdated) / 1000);
+
+      // Se estava rodando, desconta o tempo passado enquanto a página estava fora
+      if (saved.isRunning) {
+        const updatedTimeLeft = saved.timeLeft - elapsedSeconds;
+
+        setMode(saved.mode);
+        setPomodorosCompleted(saved.pomodorosCompleted || 0);
+
+        if (updatedTimeLeft > 0) {
+          setTimeLeft(updatedTimeLeft);
+          setIsRunning(true);
+        } else {
+          // Ciclo terminou enquanto a página estava fechada/fora
+          setTimeLeft(0);
+          setIsRunning(false);
+        }
+      } else {
+        // Se não estava rodando, apenas restaura o estado salvo
+        setMode(saved.mode || 'pomodoro');
+        setTimeLeft(
+          typeof saved.timeLeft === 'number' && saved.timeLeft > 0
+            ? saved.timeLeft
+            : durations[saved.mode || 'pomodoro']
+        );
+        setIsRunning(false);
+        setPomodorosCompleted(saved.pomodorosCompleted || 0);
+      }
+    } catch {
+      // Se algo der errado no parse, ignora e segue com estado padrão
+    }
+  }, []);
+
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
       intervalRef.current = setInterval(() => {
@@ -31,10 +79,8 @@ export function StudyTimer({ onComplete }: StudyTimerProps) {
           return prev - 1;
         });
       }, 1000);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
     }
 
     return () => {
@@ -44,8 +90,27 @@ export function StudyTimer({ onComplete }: StudyTimerProps) {
     };
   }, [isRunning, timeLeft]);
 
+  // Salva o estado atual do timer no localStorage sempre que algo importante mudar
+  useEffect(() => {
+    try {
+      const state = {
+        mode,
+        timeLeft,
+        isRunning,
+        pomodorosCompleted,
+        lastUpdated: Date.now(),
+      };
+      localStorage.setItem('studyTimerState', JSON.stringify(state));
+    } catch {
+      // Ignora falhas de acesso ao localStorage
+    }
+  }, [mode, timeLeft, isRunning, pomodorosCompleted]);
+
   const handleTimerComplete = () => {
     setIsRunning(false);
+    
+    // Sempre tocar um som curto ao final do ciclo
+    playNotificationSound();
     
     if (mode === 'pomodoro') {
       const newCount = pomodorosCompleted + 1;
@@ -53,9 +118,6 @@ export function StudyTimer({ onComplete }: StudyTimerProps) {
       
       // Notificar conclusão
       if (onComplete) onComplete();
-      
-      // Tocar som (opcional)
-      playNotificationSound();
       
       // Sugerir pausa
       if (newCount % 4 === 0) {
@@ -73,22 +135,46 @@ export function StudyTimer({ onComplete }: StudyTimerProps) {
   };
 
   const playNotificationSound = () => {
-    // Cria um beep simples usando Web Audio API
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
-    
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5);
+    // Cria um som de alarme curto usando Web Audio API
+    const globalObj: any = globalThis as any;
+    const AudioContextClass = globalObj.AudioContext || globalObj.webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const audioContext = new AudioContextClass();
+    const now = audioContext.currentTime;
+
+    // Três bipes curtos em sequência, estilo alarme
+    const beepCount = 3;
+    const beepDuration = 0.25; // segundos
+    const gap = 0.2; // intervalo entre bipes
+
+    for (let i = 0; i < beepCount; i++) {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      // Frequência levemente diferente a cada beep para dar sensação de alarme
+      oscillator.frequency.value = 850 + i * 50;
+      oscillator.type = 'square';
+
+      const startTime = now + i * (beepDuration + gap);
+      const endTime = startTime + beepDuration;
+
+      gainNode.gain.setValueAtTime(0.001, startTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.25, startTime + 0.05);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, endTime);
+
+      oscillator.start(startTime);
+      oscillator.stop(endTime + 0.05);
+    }
+
+    // Fecha o contexto após os bipes para liberar recursos
+    const totalDuration = beepCount * (beepDuration + gap) + 0.5;
+    setTimeout(() => {
+      audioContext.close();
+    }, totalDuration * 1000);
   };
 
   const toggleTimer = () => {

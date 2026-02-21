@@ -8,6 +8,7 @@ import { TarefaViewModel } from "@/features/tarefas/viewmodel/TarefaViewModel";
 import { useMetaViewModel } from "../viewmodel/MetaViewModel";
 import { ModalCriarMeta } from "../components/ModalCriarMeta";
 import { addRecentItem } from "@/lib/recentItems";
+import { useTaskReminders, usePeriodicDeadlineCheck } from "@/hooks/useTaskReminders";
 import {
   Calendar,
   Plus,
@@ -110,6 +111,10 @@ export const MetasMensais: React.FC = () => {
   
   // Todas as metas do mês (sem filtros) - para verificar celebração
   const todasMetasDoMes = getMetasPorTipo('mensal', mesAnoFormatado);
+
+  // 🔔 Integração de Notificações - Lembretes automáticos e verificação periódica (6h)
+  useTaskReminders(todasMetasDoMes, []);
+  usePeriodicDeadlineCheck(todasMetasDoMes, 6);
 
   // Aplicar filtros client-side
   let metasDoMes = todasMetasDoMes;

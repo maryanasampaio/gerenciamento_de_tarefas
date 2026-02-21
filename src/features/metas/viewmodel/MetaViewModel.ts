@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { MetaModel, TarefaMetaModel } from "../models/MetaModel";
 import { MetaRepository, ResumoMetas } from "../repository/MetaRepository";
+import { notificationService } from "@/services/notificationService";
 
 const repository = new MetaRepository();
 
@@ -145,9 +146,23 @@ export function useMetaViewModel() {
   const concluirMeta = async (idMeta: number) => {
     setLoading(true);
     try {
+      const metaAntes = metas.find(m => m.id_meta === idMeta);
       const atualizada = await repository.atualizar(idMeta, { status: 'concluida' });
       setMetas(prev => prev.map(m => (m.id_meta === idMeta ? atualizada : m)));
-      // Não dispara evento para evitar race condition - estado já atualizado
+      
+      // 🎉 Disparar celebração ao concluir meta
+      if (metaAntes) {
+        const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
+        if (settings.enabled && settings.celebrations) {
+          const tasksCount = metaAntes.tarefas?.length || 0;
+          const taskWord = tasksCount === 1 ? 'tarefa' : 'tarefas';
+          const message = tasksCount > 0 
+            ? `Meta "${metaAntes.titulo}" concluída com ${tasksCount} ${taskWord}! 🎯✨`
+            : `Meta "${metaAntes.titulo}" concluída! 🎯✨`;
+          await notificationService.notifyCelebration(message);
+        }
+      }
+      
       if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(atualizada);
     } finally {
       setLoading(false);
@@ -161,6 +176,19 @@ export function useMetaViewModel() {
       const novoStatus = atual?.status === 'concluida' ? 'pendente' : 'concluida';
       const atualizada = await repository.atualizar(idMeta, { status: novoStatus });
       setMetas(prev => prev.map(m => (m.id_meta === idMeta ? atualizada : m)));
+      
+      // 🎉 Disparar celebração ao concluir meta
+      if (atual && novoStatus === 'concluida') {
+        const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
+        if (settings.enabled && settings.celebrations) {
+          const tasksCount = atual.tarefas?.length || 0;
+          const taskWord = tasksCount === 1 ? 'tarefa' : 'tarefas';
+          const message = tasksCount > 0 
+            ? `Meta "${atual.titulo}" concluída com ${tasksCount} ${taskWord}! 🎯✨`
+            : `Meta "${atual.titulo}" concluída! 🎯✨`;
+          await notificationService.notifyCelebration(message);
+        }
+      }
       
       // Atualizar resumo baseado no status anterior e novo
       if (atual) {
@@ -297,5 +325,5 @@ export function useMetaViewModel() {
     carregarMetaPorId,
     carregarMetas,
     getMetasPorTipo
-  };
+  } as const;
 }

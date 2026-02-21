@@ -13,6 +13,7 @@ import { detectContextualInfo } from '../utils/contextualHelper';
 import { StudyTimer } from '../components/StudyTimer';
 import { ReadingTimer } from '../components/ReadingTimerClock';
 import { TarefaMetaModel } from '../models/MetaModel';
+import { useCelebrationNotifications } from '@/hooks/useTaskReminders';
 import {
   ArrowLeft,
   Plus,
@@ -56,6 +57,10 @@ export const MetaDetalhes: React.FC = () => {
     carregarMetaPorId,
     loading
   } = useMetaViewModel();
+  
+  // 🔔 Integração de Notificações - Celebrações ao concluir tarefas
+  const { celebrateTaskCompletion } = useCelebrationNotifications();
+  
   // Coloque todos os hooks de estado no topo, para manter ordem estável entre renders
   const [mostrarFormTarefa, setMostrarFormTarefa] = useState(false);
   const [tituloTarefa, setTituloTarefa] = useState('');
@@ -64,6 +69,7 @@ export const MetaDetalhes: React.FC = () => {
   const [showExcluirMetaDialog, setShowExcluirMetaDialog] = useState(false);
   const [widgetAtivo, setWidgetAtivo] = useState(0);
   const [sugestoesAbertas, setSugestoesAbertas] = useState(true);
+  const [mostrarStudyTimer, setMostrarStudyTimer] = useState(false);
   const [mostrarTimerLeitura, setMostrarTimerLeitura] = useState(false);
   const [mostrarLivros, setMostrarLivros] = useState(false);
   const [mostrarFilmes, setMostrarFilmes] = useState(false);
@@ -72,10 +78,12 @@ export const MetaDetalhes: React.FC = () => {
   const [widgetsVisiveis, setWidgetsVisiveis] = useState<{[key: string]: boolean}>({});
   const [idadeCardio, setIdadeCardio] = useState<string>('');
   const [nivelCardio, setNivelCardio] = useState<string>('');
+  const [tipoTreinoCardio, setTipoTreinoCardio] = useState<'curto' | 'longo'>('curto');
   const [treinoGerado, setTreinoGerado] = useState<any>(null);
   const [idadeWorkout, setIdadeWorkout] = useState<string>('');
   const [nivelWorkout, setNivelWorkout] = useState<string>('');
   const [grupoMuscular, setGrupoMuscular] = useState<string>('');
+  const [tipoTreinoWorkout, setTipoTreinoWorkout] = useState<'curto' | 'longo'>('curto');
   const [treinoWorkoutGerado, setTreinoWorkoutGerado] = useState<any>(null);
 
   const meta = metaSelecionada || metas.find(m => m.id_meta === Number(id));
@@ -136,6 +144,18 @@ export const MetaDetalhes: React.FC = () => {
   
   const widgetsContextuais = detectContextualInfo(meta.titulo, meta.descricao || '');
   
+  // Utilitário simples para embaralhar arrays (usado para variar treinos)
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const result = [...array];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = result[i];
+      result[i] = result[j];
+      result[j] = temp;
+    }
+    return result;
+  };
+  
   const gerarTreinoCardio = () => {
     if (!idadeCardio || !nivelCardio) {
       alert('Selecione sua idade e nível de exercício');
@@ -153,8 +173,37 @@ export const MetaDetalhes: React.FC = () => {
       faixaEtaria = '31-50';
     }
 
-    const treino = cardioWidget.data.treinos[nivelCardio][faixaEtaria];
-    setTreinoGerado(treino);
+    const treinoBase = cardioWidget.data.treinos[nivelCardio][faixaEtaria];
+
+    // Gera pequenas variações para não repetir exatamente o mesmo treino
+    const fases = Array.isArray(treinoBase.fases)
+      ? treinoBase.fases
+      : [];
+
+    const aquecimento = fases.find((f: any) =>
+      String(f.fase).toLowerCase().includes('aquec')
+    );
+    const resto = fases.filter((f: any) => f !== aquecimento);
+    let fasesPersonalizadas = aquecimento
+      ? [aquecimento, ...shuffleArray(resto)]
+      : shuffleArray(fases);
+
+    // Para treino curto, mantém aquecimento e reduz o número de fases principais
+    if (tipoTreinoCardio === 'curto' && fasesPersonalizadas.length > 2) {
+      const [primeira, ...restoFases] = fasesPersonalizadas;
+      fasesPersonalizadas = [primeira, ...restoFases.slice(0, 1)];
+    }
+
+    const treinoPersonalizado = {
+      ...treinoBase,
+      duracao:
+        tipoTreinoCardio === 'curto'
+          ? 'Treino curto (20–30 minutos)'
+          : treinoBase.duracao,
+      fases: fasesPersonalizadas
+    };
+
+    setTreinoGerado(treinoPersonalizado);
   };
   
   const gerarTreinoWorkout = () => {
@@ -174,8 +223,65 @@ export const MetaDetalhes: React.FC = () => {
       faixaEtaria = '31-50';
     }
 
-    const treino = workoutWidget.data.treinos[nivelWorkout][grupoMuscular][faixaEtaria];
-    setTreinoWorkoutGerado(treino);
+    const treinoBase = workoutWidget.data.treinos[nivelWorkout][grupoMuscular][faixaEtaria];
+
+    const exerciciosBase = Array.isArray(treinoBase.exercicios)
+      ? treinoBase.exercicios
+      : [];
+
+    const exerciciosEmbaralhados = shuffleArray(exerciciosBase);
+
+    // Para treino curto, seleciona apenas os principais exercícios; para longo, mantém todos
+    const exerciciosSelecionados =
+      tipoTreinoWorkout === 'curto'
+        ? exerciciosEmbaralhados.slice(0, Math.min(4, exerciciosEmbaralhados.length))
+        : exerciciosEmbaralhados;
+
+    // Para treinos curtos, priorizamos conjugar exercícios (supersets);
+    // para treinos longos, mantemos os exercícios isolados bem separados.
+    let exerciciosFinais: any[] = [];
+
+    if (tipoTreinoWorkout === 'curto') {
+      const exerciciosConjugados: any[] = [];
+
+      for (let i = 0; i < exerciciosSelecionados.length; ) {
+        const atual = exerciciosSelecionados[i];
+        const proximo = exerciciosSelecionados[i + 1];
+
+        if (proximo) {
+          // Cria um bloco conjugado/superset com dois exercícios
+          exerciciosConjugados.push({
+            nome: `${atual.nome} + ${proximo.nome} (superset)`,
+            series: atual.series,
+            descanso: atual.descanso,
+            dica:
+              `Execute ${atual.nome} e logo em seguida ${proximo.nome} sem descanso entre eles. ` +
+              (atual.dica || '')
+          });
+          i += 2;
+        } else {
+          // Último exercício sem par permanece sozinho
+          exerciciosConjugados.push(atual);
+          i += 1;
+        }
+      }
+
+      exerciciosFinais = exerciciosConjugados;
+    } else {
+      // Treino longo: exercícios ficam isolados, como no plano base
+      exerciciosFinais = exerciciosSelecionados;
+    }
+
+    const treinoPersonalizado = {
+      ...treinoBase,
+      duracao:
+        tipoTreinoWorkout === 'curto'
+          ? 'Treino curto (30–40 minutos)'
+          : treinoBase.duracao,
+      exercicios: exerciciosFinais
+    };
+
+    setTreinoWorkoutGerado(treinoPersonalizado);
   };
   
   const toggleWidget = (key: string) => {
@@ -216,9 +322,14 @@ export const MetaDetalhes: React.FC = () => {
     setMostrarFormTarefa(false);
   };
 
-  const handleToggleTarefa = (tarefa: TarefaMetaModel) => {
+  const handleToggleTarefa = async (tarefa: TarefaMetaModel) => {
     const novoStatus = tarefa.status === 'concluida' ? 'pendente' : 'concluida';
-    atualizarStatusTarefa(meta.id_meta, tarefa.id_tarefa_meta, novoStatus);
+    await atualizarStatusTarefa(meta.id_meta, tarefa.id_tarefa_meta, novoStatus);
+    
+    // 🎉 Disparar celebração ao concluir tarefa
+    if (novoStatus === 'concluida') {
+      await celebrateTaskCompletion(tarefa.titulo);
+    }
   };
 
   const handleExcluirTarefa = () => {
@@ -347,8 +458,36 @@ export const MetaDetalhes: React.FC = () => {
         </div>
 
         {meta.contexto === 'estudos' && (
-          <div className="mb-6">
-            <StudyTimer />
+          <div className="mb-6 space-y-3">
+            <Card 
+              className="border border-purple-200 dark:border-purple-800 hover:border-purple-300 dark:hover:border-purple-700 transition-colors cursor-pointer"
+              onClick={() => setMostrarStudyTimer(!mostrarStudyTimer)}
+            >
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                    <Activity className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Timer de Estudos (Pomodoro)
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {mostrarStudyTimer ? 'Fechar timer' : 'Abrir para focar nos estudos'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${
+                  mostrarStudyTimer ? 'rotate-180' : ''
+                }`} />
+              </div>
+            </Card>
+
+            {mostrarStudyTimer && (
+              <div className="animate-in slide-in-from-top-2 duration-200">
+                <StudyTimer />
+              </div>
+            )}
           </div>
         )}
         
@@ -591,6 +730,21 @@ export const MetaDetalhes: React.FC = () => {
                   </div>
                 </div>
                 
+                <div>
+                  <Label htmlFor="tipo-cardio" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                    Duração do treino
+                  </Label>
+                  <select
+                    id="tipo-cardio"
+                    value={tipoTreinoCardio}
+                    onChange={(e) => setTipoTreinoCardio(e.target.value as 'curto' | 'longo')}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  >
+                    <option value="curto">Treino curto (20–30 min)</option>
+                    <option value="longo">Treino longo/completo (40–60 min)</option>
+                  </select>
+                </div>
+                
                 <Button 
                   onClick={gerarTreinoCardio}
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white"
@@ -690,9 +844,37 @@ export const MetaDetalhes: React.FC = () => {
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     >
                       <option value="">Selecione...</option>
-                      <option value="superior">Superior (Peito e Tríceps)</option>
-                      <option value="inferior">Inferior (Pernas Completo)</option>
-                      <option value="costas">Costas e Bíceps</option>
+                      {/* Grupos superiores / empurrão */}
+                      <option value="superior">Peito</option>
+                      <option value="superior">Ombros</option>
+                      <option value="superior">Tríceps</option>
+                      <option value="superior">Peito + Tríceps</option>
+                      <option value="superior">Peito + Ombro</option>
+                      <option value="superior">Peito + Tríceps + Ombro</option>
+                      <option value="superior">Ombro + Trapézio</option>
+                      <option value="superior">Push (Peito + Ombro + Tríceps)</option>
+                      <option value="superior">Superiores (Peito + Costas + Ombros + Braços)</option>
+
+                      {/* Grupos de costas / puxão */}
+                      <option value="costas">Costas</option>
+                      <option value="costas">Bíceps</option>
+                      <option value="costas">Costas + Bíceps</option>
+                      <option value="costas">Costas + Ombro</option>
+                      <option value="costas">Pull (Costas + Bíceps + Posterior de Ombro)</option>
+                      <option value="costas">Costas + Bíceps + Abdômen</option>
+
+                      {/* Grupos inferiores */}
+                      <option value="inferior">Pernas</option>
+                      <option value="inferior">Glúteos</option>
+                      <option value="inferior">Panturrilhas</option>
+                      <option value="inferior">Pernas + Glúteos</option>
+                      <option value="inferior">Pernas + Panturrilha</option>
+                      <option value="inferior">Pernas completas (Quadríceps + Posterior + Glúteos + Panturrilha)</option>
+                      <option value="inferior">Inferiores (Pernas + Glúteos + Panturrilha)</option>
+
+                      {/* Combinações gerais */}
+                      <option value="superior">Bíceps + Tríceps</option>
+                      <option value="inferior">Full Body (ênfase em membros inferiores)</option>
                     </select>
                   </div>
                   
@@ -728,6 +910,21 @@ export const MetaDetalhes: React.FC = () => {
                       <option value="avancado">Avançado - Mais de 2 anos</option>
                     </select>
                   </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="tipo-workout" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                    Duração do treino
+                  </Label>
+                  <select
+                    id="tipo-workout"
+                    value={tipoTreinoWorkout}
+                    onChange={(e) => setTipoTreinoWorkout(e.target.value as 'curto' | 'longo')}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="curto">Treino curto (30–40 min)</option>
+                    <option value="longo">Treino longo/completo (60–75 min)</option>
+                  </select>
                 </div>
                 
                 <Button 

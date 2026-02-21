@@ -7,8 +7,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { TarefaViewModel } from "@/features/tarefas/viewmodel/TarefaViewModel";
 import { useMetaViewModel } from "../viewmodel/MetaViewModel";
 import { ModalCriarMeta } from "../components/ModalCriarMeta";
-import { ModalVisualizarMeta } from "../components/ModalVisualizarMeta";
 import { addRecentItem } from "@/lib/recentItems";
+import { useTaskReminders } from "@/hooks/useTaskReminders";
 import {
   CalendarDays,
   Plus,
@@ -132,6 +132,9 @@ export const MetasDiarias: React.FC = () => {
 
   // Todas as metas do dia (sem filtros) - para verificar celebração
   const todasMetasDoDia = getMetasPorTipo('diaria', dataFormatada);
+
+  // 🔔 Integração de Notificações - Lembretes automáticos de metas e tarefas
+  useTaskReminders(todasMetasDoDia, tarefasDoDia);
 
   // Aplicar filtros client-side
   let metasDoDia = todasMetasDoDia;

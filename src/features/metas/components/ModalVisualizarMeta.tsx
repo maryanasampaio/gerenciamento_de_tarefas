@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Circle,
   Clock,
+  ChevronDown,
   Target,
   Trash2,
   X,
@@ -54,6 +55,7 @@ export function ModalVisualizarMeta({
   const [descricaoTarefa, setDescricaoTarefa] = useState("");
   const [showExcluirMetaDialog, setShowExcluirMetaDialog] = useState(false);
   const [tarefaParaExcluir, setTarefaParaExcluir] = useState<number | null>(null);
+  const [mostrarStudyTimer, setMostrarStudyTimer] = useState(false);
 
   if (!meta) return null;
 
@@ -263,8 +265,36 @@ export function ModalVisualizarMeta({
 
           {/* Timer de Estudos - apenas para contexto de estudos */}
           {meta.contexto === 'estudos' && (
-            <div className="mb-6">
-              <StudyTimer />
+            <div className="mb-6 space-y-3">
+              <Card 
+                className="border border-purple-200 dark:border-purple-800 hover:border-purple-300 dark:hover:border-purple-700 transition-colors cursor-pointer"
+                onClick={() => setMostrarStudyTimer(!mostrarStudyTimer)}
+              >
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                      <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Timer de Estudos (Pomodoro)
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {mostrarStudyTimer ? 'Fechar timer' : 'Abrir para focar nos estudos'}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${
+                    mostrarStudyTimer ? 'rotate-180' : ''
+                  }`} />
+                </div>
+              </Card>
+
+              {mostrarStudyTimer && (
+                <div className="animate-in slide-in-from-top-2 duration-200">
+                  <StudyTimer />
+                </div>
+              )}
             </div>
           )}
 

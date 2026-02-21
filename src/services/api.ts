@@ -23,6 +23,36 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
+/**
+ * Logout forçado em caso de token inválido/expirado.
+ * Limpa apenas chaves de autenticação e direciona para /login.
+ */
+const forceLogout = () => {
+  try {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user");
+  } catch {
+    // Ignora erros de acesso ao localStorage
+  }
+
+  try {
+    // Limpa cookies genéricos (caso backend use HttpOnly além do Bearer)
+    document.cookie.split(";").forEach((cookie) => {
+      const eqPos = cookie.indexOf("=");
+      const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+      if (name) {
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+      }
+    });
+  } catch {
+    // Ignora erros ao manipular cookies
+  }
+
+  // Redireciona sempre para a tela de login
+  window.location.href = "/login";
+};
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access_token");
@@ -39,25 +69,19 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Verifica se é erro 401 com mensagem "Token expirado"
-    if (error.response?.status === 401 && error.response?.data?.mensagem === "Token expirado") {
-      // Limpa localStorage
-      localStorage.clear();
-      
-      // Limpa todos os cookies
-      document.cookie.split(";").forEach((cookie) => {
-        const eqPos = cookie.indexOf("=");
-        const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-      });
-      
-      // Redireciona para login
-      window.location.href = "/login";
+    const status = error.response?.status;
+    const data = error.response?.data;
+    const mensagem: string | undefined =
+      data?.mensagem || data?.message || data?.error || data?.erro;
+
+    // Se backend indicar explicitamente que o token expirou, força logout imediato
+    if (status === 401 && mensagem && mensagem.toLowerCase().includes("token") && mensagem.toLowerCase().includes("expir")) {
+      forceLogout();
       return Promise.reject(error);
     }
 
     // Se não for 401 ou já tentou refresh, rejeita
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    if (status !== 401 || originalRequest._retry) {
       return Promise.reject(error);
     }
 
@@ -65,10 +89,7 @@ api.interceptors.response.use(
     const url = originalRequest?.url || "";
     if (url.includes("/auth/refresh") || url.includes("/auth/login")) {
       // Se falhou no refresh ou login, limpa e redireciona
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
+      forceLogout();
       return Promise.reject(error);
     }
 
@@ -91,9 +112,7 @@ api.interceptors.response.use(
     if (!refreshToken) {
       // Não tem refresh token, limpa e redireciona
       isRefreshing = false;
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
+      forceLogout();
       return Promise.reject(error);
     }
 
@@ -129,10 +148,7 @@ api.interceptors.response.use(
       // Refresh falhou, limpa e redireciona
       processQueue(refreshError, null);
       isRefreshing = false;
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
+      forceLogout();
       return Promise.reject(refreshError);
     }
   }
