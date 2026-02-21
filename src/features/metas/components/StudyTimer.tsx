@@ -1,0 +1,337 @@
+import { useState, useEffect, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Play, Pause, RotateCcw, Clock, Coffee } from 'lucide-react';
+
+interface StudyTimerProps {
+  onComplete?: () => void;
+}
+
+export function StudyTimer({ onComplete }: StudyTimerProps) {
+  const [mode, setMode] = useState<'pomodoro' | 'shortBreak' | 'longBreak'>('pomodoro');
+  const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutos em segundos
+  const [isRunning, setIsRunning] = useState(false);
+  const [pomodorosCompleted, setPomodorosCompleted] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const durations = {
+    pomodoro: 25 * 60,
+    shortBreak: 5 * 60,
+    longBreak: 15 * 60
+  };
+
+  // Restaura estado salvo ao montar (permite que o timer continue contando mesmo ao sair da página)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('studyTimerState');
+      if (!raw) return;
+
+      const saved = JSON.parse(raw) as {
+        mode: 'pomodoro' | 'shortBreak' | 'longBreak';
+        timeLeft: number;
+        isRunning: boolean;
+        pomodorosCompleted: number;
+        lastUpdated: number;
+      };
+
+      const now = Date.now();
+      const elapsedSeconds = Math.floor((now - saved.lastUpdated) / 1000);
+
+      // Se estava rodando, desconta o tempo passado enquanto a página estava fora
+      if (saved.isRunning) {
+        const updatedTimeLeft = saved.timeLeft - elapsedSeconds;
+
+        setMode(saved.mode);
+        setPomodorosCompleted(saved.pomodorosCompleted || 0);
+
+        if (updatedTimeLeft > 0) {
+          setTimeLeft(updatedTimeLeft);
+          setIsRunning(true);
+        } else {
+          // Ciclo terminou enquanto a página estava fechada/fora
+          setTimeLeft(0);
+          setIsRunning(false);
+        }
+      } else {
+        // Se não estava rodando, apenas restaura o estado salvo
+        setMode(saved.mode || 'pomodoro');
+        setTimeLeft(
+          typeof saved.timeLeft === 'number' && saved.timeLeft > 0
+            ? saved.timeLeft
+            : durations[saved.mode || 'pomodoro']
+        );
+        setIsRunning(false);
+        setPomodorosCompleted(saved.pomodorosCompleted || 0);
+      }
+    } catch {
+      // Se algo der errado no parse, ignora e segue com estado padrão
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isRunning && timeLeft > 0) {
+      intervalRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            handleTimerComplete();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isRunning, timeLeft]);
+
+  // Salva o estado atual do timer no localStorage sempre que algo importante mudar
+  useEffect(() => {
+    try {
+      const state = {
+        mode,
+        timeLeft,
+        isRunning,
+        pomodorosCompleted,
+        lastUpdated: Date.now(),
+      };
+      localStorage.setItem('studyTimerState', JSON.stringify(state));
+    } catch {
+      // Ignora falhas de acesso ao localStorage
+    }
+  }, [mode, timeLeft, isRunning, pomodorosCompleted]);
+
+  const handleTimerComplete = () => {
+    setIsRunning(false);
+    
+    // Sempre tocar um som curto ao final do ciclo
+    playNotificationSound();
+    
+    if (mode === 'pomodoro') {
+      const newCount = pomodorosCompleted + 1;
+      setPomodorosCompleted(newCount);
+      
+      // Notificar conclusão
+      if (onComplete) onComplete();
+      
+      // Sugerir pausa
+      if (newCount % 4 === 0) {
+        setMode('longBreak');
+        setTimeLeft(durations.longBreak);
+      } else {
+        setMode('shortBreak');
+        setTimeLeft(durations.shortBreak);
+      }
+    } else {
+      // Fim da pausa, voltar ao pomodoro
+      setMode('pomodoro');
+      setTimeLeft(durations.pomodoro);
+    }
+  };
+
+  const playNotificationSound = () => {
+    // Cria um som de alarme curto usando Web Audio API
+    const globalObj: any = globalThis as any;
+    const AudioContextClass = globalObj.AudioContext || globalObj.webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const audioContext = new AudioContextClass();
+    const now = audioContext.currentTime;
+
+    // Três bipes curtos em sequência, estilo alarme
+    const beepCount = 3;
+    const beepDuration = 0.25; // segundos
+    const gap = 0.2; // intervalo entre bipes
+
+    for (let i = 0; i < beepCount; i++) {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      // Frequência levemente diferente a cada beep para dar sensação de alarme
+      oscillator.frequency.value = 850 + i * 50;
+      oscillator.type = 'square';
+
+      const startTime = now + i * (beepDuration + gap);
+      const endTime = startTime + beepDuration;
+
+      gainNode.gain.setValueAtTime(0.001, startTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.25, startTime + 0.05);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, endTime);
+
+      oscillator.start(startTime);
+      oscillator.stop(endTime + 0.05);
+    }
+
+    // Fecha o contexto após os bipes para liberar recursos
+    const totalDuration = beepCount * (beepDuration + gap) + 0.5;
+    setTimeout(() => {
+      audioContext.close();
+    }, totalDuration * 1000);
+  };
+
+  const toggleTimer = () => {
+    setIsRunning(!isRunning);
+  };
+
+  const resetTimer = () => {
+    setIsRunning(false);
+    setTimeLeft(durations[mode]);
+  };
+
+  const switchMode = (newMode: 'pomodoro' | 'shortBreak' | 'longBreak') => {
+    setMode(newMode);
+    setTimeLeft(durations[newMode]);
+    setIsRunning(false);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getProgress = () => {
+    return ((durations[mode] - timeLeft) / durations[mode]) * 100;
+  };
+
+  return (
+    <Card className="p-6 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border-purple-200 dark:border-purple-800">
+      <div className="flex flex-col items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Timer de Estudos
+          </h3>
+        </div>
+
+        {/* Seletor de Modo */}
+        <div className="flex gap-2 w-full">
+          <Button
+            variant={mode === 'pomodoro' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => switchMode('pomodoro')}
+            className={mode === 'pomodoro' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+          >
+            Foco (25min)
+          </Button>
+          <Button
+            variant={mode === 'shortBreak' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => switchMode('shortBreak')}
+            className={mode === 'shortBreak' ? 'bg-green-600 hover:bg-green-700' : ''}
+          >
+            <Coffee className="h-3 w-3 mr-1" />
+            Pausa (5min)
+          </Button>
+          <Button
+            variant={mode === 'longBreak' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => switchMode('longBreak')}
+            className={mode === 'longBreak' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+          >
+            <Coffee className="h-3 w-3 mr-1" />
+            Pausa Longa (15min)
+          </Button>
+        </div>
+
+        {/* Timer Display */}
+        <div className="relative w-48 h-48 flex items-center justify-center">
+          {/* Círculo de Progresso */}
+          <svg className="absolute inset-0 w-48 h-48 transform -rotate-90">
+            <circle
+              cx="96"
+              cy="96"
+              r="88"
+              stroke="currentColor"
+              strokeWidth="8"
+              fill="none"
+              className="text-gray-200 dark:text-gray-700"
+            />
+            <circle
+              cx="96"
+              cy="96"
+              r="88"
+              stroke="currentColor"
+              strokeWidth="8"
+              fill="none"
+              strokeDasharray={`${2 * Math.PI * 88}`}
+              strokeDashoffset={`${2 * Math.PI * 88 * (1 - getProgress() / 100)}`}
+              className={`transition-all duration-1000 ${
+                mode === 'pomodoro' 
+                  ? 'text-purple-600' 
+                  : mode === 'shortBreak'
+                  ? 'text-green-600'
+                  : 'text-blue-600'
+              }`}
+              strokeLinecap="round"
+            />
+          </svg>
+          
+          {/* Tempo */}
+          <div className="text-5xl font-bold text-gray-900 dark:text-white">
+            {formatTime(timeLeft)}
+          </div>
+        </div>
+
+        {/* Controles */}
+        <div className="flex gap-3">
+          <Button
+            onClick={toggleTimer}
+            size="lg"
+            className={`${
+              mode === 'pomodoro'
+                ? 'bg-purple-600 hover:bg-purple-700'
+                : mode === 'shortBreak'
+                ? 'bg-green-600 hover:bg-green-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+            } text-white px-8`}
+          >
+            {isRunning ? (
+              <>
+                <Pause className="h-5 w-5 mr-2" />
+                Pausar
+              </>
+            ) : (
+              <>
+                <Play className="h-5 w-5 mr-2" />
+                Iniciar
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={resetTimer}
+            variant="outline"
+            size="lg"
+          >
+            <RotateCcw className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Contador de Pomodoros */}
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <span className="font-medium">Pomodoros completados:</span>
+          <span className="font-bold text-purple-600 dark:text-purple-400">{pomodorosCompleted}</span>
+        </div>
+
+        {/* Dicas */}
+        {!isRunning && timeLeft === durations[mode] && (
+          <div className="w-full p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+            <p className="text-xs text-purple-700 dark:text-purple-300 text-center">
+              {mode === 'pomodoro' 
+                ? '🎯 Foque em uma tarefa por vez. Elimine distrações!'
+                : '☕ Hora de descansar! Levante-se, estique-se ou hidrate-se.'}
+            </p>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}

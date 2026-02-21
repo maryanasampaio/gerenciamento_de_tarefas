@@ -48,7 +48,15 @@ export function Modal({
       alert("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
-    onConfirm({ titulo, importancia, status, ativo });
+    
+    const dados: any = { titulo, importancia, status, ativo };
+    
+    // Se estiver em modo de edição, incluir o ID da tarefa
+    if (modoEdicao && tarefa) {
+      dados.id_tarefa = tarefa.id_tarefa || tarefa.id;
+    }
+    
+    onConfirm(dados);
   };
 
   return (

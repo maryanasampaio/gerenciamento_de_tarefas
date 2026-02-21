@@ -1,4 +1,4 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { TarefaUseCase } from "../usecases/TarefaUseCase";
 
 export function TarefaViewModel() {
@@ -44,11 +44,17 @@ export function TarefaViewModel() {
         await tarefaUseCase.atualizar(tarefaSelecionada.id_tarefa, {
           titulo,
           importancia,
-          status,
+          status: status === "em_andamento" ? "andamento" : status,
           ativo,
         });
       } else {
-        await tarefaUseCase.criar(titulo, importancia, status, ativo, new Date().toISOString());
+        await tarefaUseCase.criar(
+          titulo,
+          importancia,
+          status === "em_andamento" ? "andamento" : status,
+          ativo,
+          new Date().toISOString()
+        );
       }
       setIsModalOpen(false);
       setModoEdicao(false);

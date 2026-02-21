@@ -1,0 +1,29 @@
+<svg width="900" height="300" viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Circular arrows and checklist icon -->
+  <g transform="translate(150, 150)">
+    <!-- Blue top arrow -->
+    <path d="M -60,-40 A 70,70 0 0,1 40,-80" fill="none" stroke="#1e5a8e" stroke-width="12" stroke-linecap="round"/>
+    <path d="M 40,-80 L 50,-70 L 35,-65 Z" fill="#1e5a8e"/>
+    
+    <!-- Green bottom arrow -->
+    <path d="M 60,40 A 70,70 0 0,1 -40,80" fill="none" stroke="#5a9f3a" stroke-width="12" stroke-linecap="round"/>
+    <path d="M -40,80 L -50,70 L -35,65 Z" fill="#5a9f3a"/>
+    
+    <!-- Checklist rectangle -->
+    <rect x="-35" y="-50" width="70" height="100" fill="white" stroke="#1e5a8e" stroke-width="3" rx="5"/>
+    
+    <!-- Checkmark items -->
+    <path d="M -20,-30 L -15,-25 L -5,-35" fill="none" stroke="#5a9f3a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="-5" y1="-30" x2="20" y2="-30" stroke="#333" stroke-width="2.5"/>
+    
+    <path d="M -20,-5 L -15,0 L -5,-10" fill="none" stroke="#1e5a8e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="-5" y1="-5" x2="20" y2="-5" stroke="#333" stroke-width="2.5"/>
+    
+    <circle cx="-17" cy="20" r="3" fill="#999"/>
+    <line x1="-5" y1="20" x2="20" y2="20" stroke="#999" stroke-width="2.5"/>
+  </g>
+  
+  <!-- Text "TaskFlow" -->
+  <text x="300" y="195" font-family="Arial, sans-serif" font-weight="bold" font-size="110" fill="#1e5a8e">Task</text>
+  <text x="570" y="195" font-family="Arial, sans-serif" font-weight="bold" font-size="110" fill="#5a9f3a">Flow</text>
+</svg>

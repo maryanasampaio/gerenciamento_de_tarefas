@@ -14,10 +14,25 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<any | null>(() => {
-    const saved = localStorage.getItem("user");
-    return saved ? JSON.parse(saved) : null;
-  });
+  // Parser seguro para valores JSON do localStorage
+  const getStoredJSON = (key: string) => {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    if (raw === "undefined" || raw === "null" || raw.trim() === "") {
+      // Limpa valores inválidos previamente gravados
+      localStorage.removeItem(key);
+      return null;
+    }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      // Em caso de JSON inválido, remove e retorna null
+      localStorage.removeItem(key);
+      return null;
+    }
+  };
+
+  const [user, setUser] = useState<any | null>(() => getStoredJSON("user"));
 
   const [loading, setLoading] = useState(true);
 
@@ -28,21 +43,103 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const checkAuth = async (): Promise<boolean> => {
     try {
-      const response = await api.get("/auth/usuario", { withCredentials: true });
-
-      if (response.status === 200 && response.data?.dados?.usuario) {
-        setUser(response.data.dados.usuario);
-        localStorage.setItem("user", JSON.stringify(response.data.dados.usuario));
-        return true;
-      } else {
+      const token = localStorage.getItem("access_token");
+      const refreshToken = localStorage.getItem("refresh_token");
+      const savedUser = getStoredJSON("user");
+      
+      // Se não tem nenhum token, limpa tudo e retorna false
+      if (!token && !refreshToken) {
         setUser(null);
         localStorage.removeItem("user");
+        return false;
       }
-    } catch {
+
+      // Se tem usuário salvo e token, assume sessão válida (offline-first)
+      // Isso evita logout ao dar refresh se o backend estiver lento
+      if (savedUser && (token || refreshToken)) {
+        setUser(savedUser);
+        
+        // Tenta validar em background, mas não bloqueia a UI
+        try {
+          const response = await api.get("/auth/me");
+          if (response.status === 200 && response.data?.usuario) {
+            // Atualiza com dados frescos do backend
+            setUser(response.data.usuario);
+            localStorage.setItem("user", JSON.stringify(response.data.usuario));
+          }
+        } catch (apiError: any) {
+          // Se 401, mantém user local mas sinaliza que o token pode estar expirado
+          // O interceptor vai tentar renovar na próxima requisição
+          if (apiError?.response?.status !== 401) {
+            // Outros erros (rede, etc) - mantém sessão local
+            console.warn("Erro ao validar sessão, mantendo dados locais:", apiError.message);
+          }
+        }
+        return true;
+      }
+
+      // Se não tem user salvo, tenta buscar do backend
+      if (token) {
+        try {
+          const response = await api.get("/auth/me");
+          if (response.status === 200 && response.data?.usuario) {
+            setUser(response.data.usuario);
+            localStorage.setItem("user", JSON.stringify(response.data.usuario));
+            return true;
+          }
+        } catch (apiError: any) {
+          // Apenas limpa em 401 sem refreshToken
+          if (apiError?.response?.status === 401 && !refreshToken) {
+            setUser(null);
+            localStorage.removeItem("user");
+            localStorage.removeItem("access_token");
+            return false;
+          }
+        }
+      }
+      
+      // Se tem refreshToken mas não tem access_token, tenta renovar
+      if (refreshToken && !token) {
+        try {
+          const response = await api.post("/auth/refresh");
+          const newToken = response.data?.access_token;
+          if (newToken) {
+            localStorage.setItem("access_token", newToken);
+            // Tenta buscar dados do usuário
+            const userResponse = await api.get("/auth/me");
+            if (userResponse.data?.usuario) {
+              setUser(userResponse.data.usuario);
+              localStorage.setItem("user", JSON.stringify(userResponse.data.usuario));
+              return true;
+            }
+          }
+        } catch (refreshError) {
+          // Refresh falhou, limpa tudo
+          setUser(null);
+          localStorage.removeItem("user");
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          return false;
+        }
+      }
+      
+      // Caso padrão: mantém user se existir
+      if (savedUser) {
+        setUser(savedUser);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      // Erro inesperado - mantém sessão local se tiver
+      const savedUser = getStoredJSON("user");
+      if (savedUser) {
+        setUser(savedUser);
+        return true;
+      }
       setUser(null);
-      localStorage.removeItem("user");
+      return false;
     }
-    return false;
   };
 
   /**
@@ -79,12 +176,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const logout = async () => {
     try {
-      await api.post("/auth/logout", {}, { withCredentials: true });
+      await api.post("/auth/logout");
     } catch {
       /* ignora erros de logout */
     } finally {
       setUser(null);
       localStorage.removeItem("user");
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
     }
   };
 
