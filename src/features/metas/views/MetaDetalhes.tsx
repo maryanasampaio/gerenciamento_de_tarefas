@@ -73,6 +73,7 @@ export const MetaDetalhes: React.FC = () => {
   const [mostrarTimerLeitura, setMostrarTimerLeitura] = useState(false);
   const [mostrarLivros, setMostrarLivros] = useState(false);
   const [mostrarFilmes, setMostrarFilmes] = useState(false);
+  const [mostrarShopping, setMostrarShopping] = useState(false);
   const [mostrarCardio, setMostrarCardio] = useState(false);
   const [mostrarWorkout, setMostrarWorkout] = useState(false);
   const [widgetsVisiveis, setWidgetsVisiveis] = useState<{[key: string]: boolean}>({});
@@ -667,6 +668,82 @@ export const MetaDetalhes: React.FC = () => {
           </div>
         )}
         
+        {widgetsContextuais.some(w => w.type === 'shopping') && (
+          <div className="mb-6 space-y-3">
+            <Card 
+              className="border border-emerald-200 dark:border-emerald-800 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors cursor-pointer"
+              onClick={() => setMostrarShopping(!mostrarShopping)}
+            >
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                    <ShoppingCart className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Lista Inteligente de Compras
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {mostrarShopping ? 'Fechar sugestões' : 'Ver categorias e dicas para suas compras'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${
+                  mostrarShopping ? 'rotate-180' : ''
+                }`} />
+              </div>
+            </Card>
+
+            {mostrarShopping && (
+              <div className="animate-in slide-in-from-top-2 duration-200 bg-gray-50 dark:bg-slate-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
+                {widgetsContextuais.filter(w => w.type === 'shopping').map((widget, index) => (
+                  <div key={`shopping-${index}`} className="space-y-4">
+                    <div className="border-b border-gray-200 dark:border-gray-700 pb-3">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                        Sugestão de organização das compras
+                      </h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Melhor horário: <span className="font-semibold text-emerald-600 dark:text-emerald-400">{widget.data.melhorHorario}</span>
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {Array.isArray(widget.data.categorias) && widget.data.categorias.map((cat: any, idx: number) => (
+                        <div key={idx} className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                          <h5 className="font-semibold text-xs text-gray-900 dark:text-white mb-1">
+                            {cat.nome}
+                          </h5>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            {Array.isArray(cat.itens) ? cat.itens.join(', ') : ''}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {Array.isArray(widget.data.dicas) && widget.data.dicas.length > 0 && (
+                      <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                        <div className="flex items-start gap-2">
+                          <Lightbulb className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+                          <div className="space-y-1">
+                            <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                              Dicas para suas idas ao mercado:
+                            </p>
+                            <ul className="text-xs text-gray-700 dark:text-gray-300 list-disc list-inside space-y-0.5">
+                              {widget.data.dicas.map((dica: string, i: number) => (
+                                <li key={i}>{dica}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {widgetsContextuais.some(w => w.type === 'cardio') && (
           <div className="mb-6 space-y-3">
             <Card 
