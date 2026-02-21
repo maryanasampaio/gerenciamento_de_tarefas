@@ -1,57 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MetaModel, TarefaMetaModel } from "../models/MetaModel";
+import { MetaRepository, ResumoMetas } from "../repository/MetaRepository";
 
-// Dados mockados iniciais
-const metasMockadas: MetaModel[] = [
-  {
-    id_meta: 1,
-    titulo: "Aprender TypeScript Avançado",
-    descricao: "Dominar conceitos avançados de TypeScript para melhorar a qualidade do código",
-    tipo: 'mensal',
-    contexto: 'estudos',
-    data_inicio: "01/01/2026",
-    data_fim: "31/01/2026",
-    status: 'andamento',
-    importancia: 'alta',
-    progresso: 60,
-    tarefas: [
-      {
-        id_tarefa_meta: 1,
-        id_meta: 1,
-        titulo: "Estudar Generics",
-        descricao: "Entender e praticar o uso de generics",
-        status: 'concluida',
-        data_conclusao: "15/01/2026",
-        created_at: "2026-01-01T10:00:00"
-      },
-      {
-        id_tarefa_meta: 2,
-        id_meta: 1,
-        titulo: "Praticar Decorators",
-        descricao: "Implementar decorators em projetos práticos",
-        status: 'andamento',
-        created_at: "2026-01-10T10:00:00"
-      }
-    ],
-    created_at: "2026-01-01T10:00:00"
-  }
-];
+const repository = new MetaRepository();
 
 export function useMetaViewModel() {
-  const [metas, setMetas] = useState<MetaModel[]>(() => {
-    // Carregar do localStorage se existir
-    const saved = localStorage.getItem('metas_mockadas');
-    return saved ? JSON.parse(saved) : metasMockadas;
+  const [metas, setMetas] = useState<MetaModel[]>([]);
+  const [resumo, setResumo] = useState<ResumoMetas>({
+    pendentes: 0,
+    em_andamento: 0,
+    concluidas: 0,
+    total: 0
   });
   const [loading, setLoading] = useState(false);
   const [modalCriarAberto, setModalCriarAberto] = useState(false);
   const [modalVisualizarAberto, setModalVisualizarAberto] = useState(false);
   const [metaSelecionada, setMetaSelecionada] = useState<MetaModel | null>(null);
 
-  // Salvar no localStorage sempre que metas mudarem
   useEffect(() => {
-    localStorage.setItem('metas_mockadas', JSON.stringify(metas));
-  }, [metas]);
+    // inicial: não carrega nada automaticamente; carregamento ocorre via getMetasPorTipo
+  }, []);
 
   const abrirModalCriar = () => {
     setModalCriarAberto(true);
@@ -71,57 +39,46 @@ export function useMetaViewModel() {
     setMetaSelecionada(null);
   };
 
-  const criarMeta = (dados: Partial<MetaModel>) => {
-    const novaMeta: MetaModel = {
-      id_meta: Date.now(),
-      titulo: dados.titulo || '',
-      descricao: dados.descricao || '',
-      tipo: dados.tipo || 'diaria',
-      contexto: dados.contexto || 'outros',
-      data_inicio: dados.data_inicio || new Date().toLocaleDateString('pt-BR'),
-      data_fim: dados.data_fim || new Date().toLocaleDateString('pt-BR'),
-      status: 'pendente',
-      importancia: dados.importancia || 'media',
-      progresso: 0,
-      tarefas: [],
-      created_at: new Date().toISOString()
-    };
-
-    setMetas(prev => [...prev, novaMeta]);
-    fecharModalCriar();
-  };
-
-  const adicionarTarefaNaMeta = (idMeta: number, tarefaDados: Partial<TarefaMetaModel>) => {
-    const novaTarefa: TarefaMetaModel = {
-      id_tarefa_meta: Date.now(),
-      id_meta: idMeta,
-      titulo: tarefaDados.titulo || '',
-      descricao: tarefaDados.descricao || '',
-      status: tarefaDados.status || 'pendente',
-      importancia: tarefaDados.importancia || 'media',
-      created_at: new Date().toISOString()
-    };
-
-    setMetas(prev => prev.map(meta => {
-      if (meta.id_meta === idMeta) {
-        const novasTarefas = [...meta.tarefas, novaTarefa];
-        const progresso = calcularProgresso(novasTarefas);
-        const statusMeta = calcularStatusMeta(novasTarefas);
-        return { ...meta, tarefas: novasTarefas, progresso, status: statusMeta };
-      }
-      return meta;
-    }));
-
-    // Atualizar meta selecionada se estiver visualizando
-    if (metaSelecionada?.id_meta === idMeta) {
-      setMetaSelecionada(prev => {
-        if (!prev) return null;
-        const novasTarefas = [...prev.tarefas, novaTarefa];
-        const statusMeta = calcularStatusMeta(novasTarefas);
-        return { ...prev, tarefas: novasTarefas, progresso: calcularProgresso(novasTarefas), status: statusMeta };
+  const criarMeta = useCallback(async (dados: Partial<MetaModel>) => {
+    setLoading(true);
+    try {
+      const nova = await repository.criar({
+        titulo: dados.titulo || '',
+        descricao: dados.descricao,
+        tipo: dados.tipo || 'diaria',
+        contexto: dados.contexto || 'outros',
+        prioridade: dados.importancia || 'media',
+        data_inicio: dados.data_inicio,
+        data_fim: dados.data_fim,
       });
+      
+      // NÃO adiciona localmente - a view fará reload após criação
+      // Apenas atualiza o resumo otimisticamente
+      setResumo(prev => ({
+        ...prev,
+        total: prev.total + 1,
+        pendentes: prev.pendentes + 1
+      }));
+      fecharModalCriar();
+      
+      // Retorna a meta criada para que a view possa recarregar
+      return nova;
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
+
+  const adicionarTarefaNaMeta = useCallback(async (idMeta: number, tarefaDados: Partial<TarefaMetaModel>) => {
+    setLoading(true);
+    try {
+      await repository.criarTarefa(idMeta, { titulo: tarefaDados.titulo || '', descricao: tarefaDados.descricao });
+      const detalhes = await repository.detalhes(idMeta);
+      setMetas(prev => prev.map(m => (m.id_meta === idMeta ? detalhes : m)));
+      if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(detalhes);
+    } finally {
+      setLoading(false);
+    }
+  }, [metaSelecionada]);
 
   // Calcular status da meta baseado nas tarefas
   const calcularStatusMeta = (tarefas: TarefaMetaModel[]): 'pendente' | 'andamento' | 'concluida' => {
@@ -136,48 +93,19 @@ export function useMetaViewModel() {
     return 'pendente';
   };
 
-  const atualizarStatusTarefa = (idMeta: number, idTarefa: number, novoStatus: 'pendente' | 'andamento' | 'concluida') => {
-    setMetas(prev => prev.map(meta => {
-      if (meta.id_meta === idMeta) {
-        const tarefasAtualizadas = meta.tarefas.map(tarefa => {
-          if (tarefa.id_tarefa_meta === idTarefa) {
-            return {
-              ...tarefa,
-              status: novoStatus,
-              data_conclusao: novoStatus === 'concluida' ? new Date().toLocaleDateString('pt-BR') : undefined
-            };
-          }
-          return tarefa;
-        });
-        const progresso = calcularProgresso(tarefasAtualizadas);
-        const statusMeta = calcularStatusMeta(tarefasAtualizadas);
-        return { ...meta, tarefas: tarefasAtualizadas, progresso, status: statusMeta };
-      }
-      return meta;
-    }));
-
-    // Atualizar meta selecionada
-    if (metaSelecionada?.id_meta === idMeta) {
-      setMetaSelecionada(prev => {
-        if (!prev) return null;
-        const tarefasAtualizadas = prev.tarefas.map(tarefa => {
-          if (tarefa.id_tarefa_meta === idTarefa) {
-            return {
-              ...tarefa,
-              status: novoStatus,
-              data_conclusao: novoStatus === 'concluida' ? new Date().toLocaleDateString('pt-BR') : undefined
-            };
-          }
-          return tarefa;
-        });
-        const progresso = calcularProgresso(tarefasAtualizadas);
-        const statusMeta = calcularStatusMeta(tarefasAtualizadas);
-        return { ...prev, tarefas: tarefasAtualizadas, progresso, status: statusMeta };
-      });
+  const atualizarStatusTarefa = useCallback(async (idMeta: number, idTarefa: number, novoStatus: 'pendente' | 'andamento' | 'concluida') => {
+    setLoading(true);
+    try {
+      const metaAtualizada = await repository.atualizarStatusTarefa(idMeta, idTarefa, novoStatus === 'andamento' ? 'pendente' : novoStatus);
+      setMetas(prev => prev.map(m => (m.id_meta === idMeta ? metaAtualizada : m)));
+      if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(metaAtualizada);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [metaSelecionada]);
 
   const excluirTarefa = (idMeta: number, idTarefa: number) => {
+    // Sem endpoint de exclusão de tarefa no backend: mantém comportamento local por enquanto
     setMetas(prev => prev.map(meta => {
       if (meta.id_meta === idMeta) {
         const tarefasAtualizadas = meta.tarefas.filter(t => t.id_tarefa_meta !== idTarefa);
@@ -187,8 +115,8 @@ export function useMetaViewModel() {
       }
       return meta;
     }));
+    // Não dispara evento - apenas operação local, estado já atualizado
 
-    // Atualizar meta selecionada
     if (metaSelecionada?.id_meta === idMeta) {
       setMetaSelecionada(prev => {
         if (!prev) return null;
@@ -199,90 +127,71 @@ export function useMetaViewModel() {
     }
   };
 
-  const excluirMeta = (idMeta: number) => {
-    setMetas(prev => prev.filter(m => m.id_meta !== idMeta));
-    fecharModalVisualizar();
-  };
+  const excluirMeta = useCallback(async (idMeta: number) => {
+    setLoading(true);
+    try {
+      await repository.deletar(idMeta);
+      setMetas(prev => prev.filter(m => m.id_meta !== idMeta));
+      setResumo(prev => ({
+        ...prev,
+        total: Math.max(0, prev.total - 1)
+      }));
+      fecharModalVisualizar();
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const concluirMeta = (idMeta: number) => {
-    const dataAtual = new Date().toLocaleDateString('pt-BR');
-    
-    setMetas(prev => prev.map(meta => {
-      if (meta.id_meta === idMeta) {
-        // Marcar todas as tarefas como concluídas
-        const tarefasAtualizadas = meta.tarefas.map(tarefa => ({
-          ...tarefa,
-          status: 'concluida' as const,
-          data_conclusao: tarefa.data_conclusao || dataAtual
-        }));
-        
-        return {
-          ...meta,
-          tarefas: tarefasAtualizadas,
-          status: 'concluida' as const,
-          progresso: 100
-        };
-      }
-      return meta;
-    }));
-
-    // Atualizar meta selecionada
-    if (metaSelecionada?.id_meta === idMeta) {
-      setMetaSelecionada(prev => {
-        if (!prev) return null;
-        const tarefasAtualizadas = prev.tarefas.map(tarefa => ({
-          ...tarefa,
-          status: 'concluida' as const,
-          data_conclusao: tarefa.data_conclusao || dataAtual
-        }));
-        
-        return {
-          ...prev,
-          tarefas: tarefasAtualizadas,
-          status: 'concluida' as const,
-          progresso: 100
-        };
-      });
+  const concluirMeta = async (idMeta: number) => {
+    setLoading(true);
+    try {
+      const atualizada = await repository.atualizar(idMeta, { status: 'concluida' });
+      setMetas(prev => prev.map(m => (m.id_meta === idMeta ? atualizada : m)));
+      // Não dispara evento para evitar race condition - estado já atualizado
+      if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(atualizada);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const alternarConclusaoMeta = (idMeta: number) => {
-    setMetas(prev => prev.map(meta => {
-      if (meta.id_meta === idMeta) {
-        if (meta.status === 'concluida') {
-          // Desconcluir: voltar todas as tarefas para pendente
-          const tarefasAtualizadas = meta.tarefas.map(tarefa => ({
-            ...tarefa,
-            status: 'pendente' as const,
-            data_conclusao: undefined
-          }));
+  const alternarConclusaoMeta = useCallback(async (idMeta: number) => {
+    setLoading(true);
+    try {
+      const atual = metas.find(m => m.id_meta === idMeta);
+      const novoStatus = atual?.status === 'concluida' ? 'pendente' : 'concluida';
+      const atualizada = await repository.atualizar(idMeta, { status: novoStatus });
+      setMetas(prev => prev.map(m => (m.id_meta === idMeta ? atualizada : m)));
+      
+      // Atualizar resumo baseado no status anterior e novo
+      if (atual) {
+        setResumo(prev => {
+          const novo = { ...prev };
           
-          return {
-            ...meta,
-            tarefas: tarefasAtualizadas,
-            status: 'pendente' as const,
-            progresso: 0
-          };
-        } else {
-          // Concluir: marcar todas as tarefas como concluídas
-          const dataAtual = new Date().toLocaleDateString('pt-BR');
-          const tarefasAtualizadas = meta.tarefas.map(tarefa => ({
-            ...tarefa,
-            status: 'concluida' as const,
-            data_conclusao: tarefa.data_conclusao || dataAtual
-          }));
+          // Decrementar do status anterior
+          if (atual.status === 'concluida') {
+            novo.concluidas = Math.max(0, novo.concluidas - 1);
+          } else if (atual.status === 'andamento') {
+            novo.em_andamento = Math.max(0, novo.em_andamento - 1);
+          } else {
+            novo.pendentes = Math.max(0, novo.pendentes - 1);
+          }
           
-          return {
-            ...meta,
-            tarefas: tarefasAtualizadas,
-            status: 'concluida' as const,
-            progresso: 100
-          };
-        }
+          // Incrementar no novo status
+          if (novoStatus === 'concluida') {
+            novo.concluidas += 1;
+          } else {
+            novo.pendentes += 1;
+          }
+          
+          return novo;
+        });
       }
-      return meta;
-    }));
-  };
+      
+      if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(atualizada);
+    } finally {
+      setLoading(false);
+    }
+  }, [metas, metaSelecionada]);
 
   const calcularProgresso = (tarefas: TarefaMetaModel[]): number => {
     if (tarefas.length === 0) return 0;
@@ -290,36 +199,86 @@ export function useMetaViewModel() {
     return Math.round((concluidas / tarefas.length) * 100);
   };
 
+  const carregarMetas = useCallback(async (
+    tipo: 'diaria' | 'mensal' | 'anual', 
+    data?: string,
+    filtros?: {
+      status?: 'pendente' | 'em_andamento' | 'concluida';
+      prioridade?: 'alta' | 'media' | 'baixa';
+      pesquisa?: string;
+    }
+  ) => {
+    setLoading(true);
+    try {
+      const response = await repository.listar(tipo, { 
+        data,
+        status: filtros?.status,
+        prioridade: filtros?.prioridade,
+        pesquisa: filtros?.pesquisa
+      });
+      setMetas(response.metas);
+      setResumo(response.resumo);
+    } finally {
+      setLoading(false);
+    }
+  }, [repository]);
+
+  const carregarMetaPorId = async (idMeta: number) => {
+    setLoading(true);
+    try {
+      const detalhes = await repository.detalhes(idMeta);
+      setMetas(prev => {
+        const existe = prev.some(m => m.id_meta === idMeta);
+        return existe ? prev.map(m => (m.id_meta === idMeta ? detalhes : m)) : [...prev, detalhes];
+      });
+      setMetaSelecionada(detalhes);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getMetasPorTipo = (tipo: 'diaria' | 'mensal' | 'anual', data?: string) => {
     let metasFiltradas = metas.filter(m => m.tipo === tipo);
 
-    // Filtro adicional por data se fornecido (para metas diárias)
-    if (tipo === 'diaria' && data) {
-      metasFiltradas = metasFiltradas.filter(m => m.data_inicio === data);
-    }
+    // Helper para converter datas ISO/strings em formato pt-BR (DD/MM/AAAA)
+    const toPtBrDate = (value?: string): string | null => {
+      if (!value) return null;
+      if (value.includes('/')) return value; // já está em DD/MM/AAAA
+      const d = new Date(value);
+      if (!Number.isNaN(d.getTime())) return d.toLocaleDateString('pt-BR');
+      return null;
+    };
 
-    // Para metas mensais, filtrar pelo mês/ano
-    if (tipo === 'mensal' && data) {
-      const [dia, mes, ano] = data.split('/');
+    // Para 'diaria', reforça o filtro pelo dia usando created_at quando disponível
+    if (tipo === 'diaria' && data) {
       metasFiltradas = metasFiltradas.filter(m => {
-        const [diaInicio, mesInicio, anoInicio] = m.data_inicio.split('/');
+        const created = toPtBrDate(m.created_at);
+        const inicio = m.data_inicio || null; // já normalizado em pt-BR pelo mapper
+        // Compara por created_at; se ausente ou inválido, cai para data_inicio
+        if (created) return created === data;
+        if (inicio) return inicio === data;
+        return true; // se sem datas, mantém (evita esconder indevidamente)
+      });
+    }
+    if (tipo === 'mensal' && data) {
+      const [mes, ano] = data.split('/');
+      metasFiltradas = metasFiltradas.filter(m => {
+        const [, mesInicio, anoInicio] = m.data_inicio.split('/');
         return mesInicio === mes && anoInicio === ano;
       });
     }
-
-    // Para metas anuais, filtrar pelo ano
     if (tipo === 'anual' && data) {
       metasFiltradas = metasFiltradas.filter(m => {
-        const [dia, mes, ano] = m.data_inicio.split('/');
+        const [,, ano] = m.data_inicio.split('/');
         return ano === data;
       });
     }
-
     return metasFiltradas;
   };
 
   return {
     metas,
+    resumo,
     loading,
     modalCriarAberto,
     modalVisualizarAberto,
@@ -335,6 +294,8 @@ export function useMetaViewModel() {
     excluirMeta,
     concluirMeta,
     alternarConclusaoMeta,
+    carregarMetaPorId,
+    carregarMetas,
     getMetasPorTipo
   };
 }

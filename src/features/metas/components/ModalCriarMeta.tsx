@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MetaModel, ContextoMeta } from "../models/MetaModel";
 import {
   BookOpen,
@@ -16,7 +16,7 @@ import {
   DollarSign,
   Heart,
   Smile,
-  MoreHorizontal
+  Target
 } from "lucide-react";
 
 interface ModalCriarMetaProps {
@@ -38,8 +38,34 @@ export function ModalCriarMeta({
   const [descricao, setDescricao] = useState("");
   const [contexto, setContexto] = useState<ContextoMeta>('outros');
   const [importancia, setImportancia] = useState<'baixa' | 'media' | 'alta'>('media');
-  const [dataInicio, setDataInicio] = useState(dataInicial || new Date().toLocaleDateString('pt-BR'));
+  
+  // Converte dataInicial para formato correto dependendo do tipo
+  const getDataInicialFormatada = () => {
+    if (!dataInicial) return new Date().toLocaleDateString('pt-BR');
+    
+    // Se for mensal e vier no formato MM/YYYY, converte para 01/MM/YYYY
+    if (tipo === 'mensal' && dataInicial.split('/').length === 2) {
+      const [mes, ano] = dataInicial.split('/');
+      return `01/${mes}/${ano}`;
+    }
+    
+    return dataInicial;
+  };
+  
+  const [dataInicio, setDataInicio] = useState(getDataInicialFormatada());
   const [dataFim, setDataFim] = useState("");
+
+  // Reseta os estados quando o modal abrir ou dataInicial mudar
+  useEffect(() => {
+    if (open) {
+      setTitulo("");
+      setDescricao("");
+      setContexto('outros');
+      setImportancia('media');
+      setDataInicio(getDataInicialFormatada());
+      setDataFim("");
+    }
+  }, [open, dataInicial, tipo]);
 
   const contextosConfig = {
     estudos: { icon: BookOpen, label: 'Estudos', color: 'purple' },
@@ -48,7 +74,7 @@ export function ModalCriarMeta({
     financas: { icon: DollarSign, label: 'Finanças', color: 'green' },
     saude: { icon: Heart, label: 'Saúde', color: 'red' },
     lazer: { icon: Smile, label: 'Lazer', color: 'pink' },
-    outros: { icon: MoreHorizontal, label: 'Outros', color: 'gray' }
+    outros: { icon: Target, label: 'Outros', color: 'gray' }
   };
 
   const handleConfirm = () => {
@@ -64,7 +90,8 @@ export function ModalCriarMeta({
       contexto,
       importancia,
       data_inicio: dataInicio,
-      data_fim: dataFim || dataInicio
+      // Apenas metas anuais têm data_fim diferente de data_inicio
+      data_fim: tipo === 'anual' ? (dataFim || dataInicio) : dataInicio
     });
 
     // Limpar campos
@@ -122,14 +149,14 @@ export function ModalCriarMeta({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md mx-3 sm:mx-auto max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">
+          <DialogTitle className="text-lg sm:text-xl font-bold">
             Nova Meta {getTipoLabel()}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 mt-3">
+        <div className="flex flex-col gap-3 sm:gap-4 mt-2 sm:mt-3">
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Título da Meta *
@@ -158,7 +185,7 @@ export function ModalCriarMeta({
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Contexto *
             </label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {Object.entries(contextosConfig).map(([key, config]) => {
                 const Icon = config.icon;
                 const isSelected = contexto === key;
@@ -167,7 +194,7 @@ export function ModalCriarMeta({
                     key={key}
                     type="button"
                     onClick={() => setContexto(key as ContextoMeta)}
-                    className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1 ${
+                    className={`p-2 sm:p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1 ${
                       isSelected
                         ? `border-${config.color}-500 bg-${config.color}-50 dark:bg-${config.color}-950/30`
                         : 'border-gray-200 hover:border-gray-300 dark:border-gray-700'
@@ -177,9 +204,9 @@ export function ModalCriarMeta({
                       backgroundColor: getColorBg(config.color)
                     } : {}}
                   >
-                    <Icon className={`h-5 w-5 ${isSelected ? `text-${config.color}-600` : 'text-gray-500'}`} 
+                    <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${isSelected ? `text-${config.color}-600` : 'text-gray-500'}`} 
                       style={isSelected ? { color: getColorValue(config.color) } : {}} />
-                    <span className="text-xs font-medium">{config.label}</span>
+                    <span className="text-[10px] sm:text-xs font-medium">{config.label}</span>
                   </button>
                 );
               })}
@@ -194,40 +221,40 @@ export function ModalCriarMeta({
               <button
                 type="button"
                 onClick={() => setImportancia('baixa')}
-                className={`p-3 rounded-lg border-2 transition-all ${
+                className={`p-2 sm:p-3 rounded-lg border-2 transition-all ${
                   importancia === 'baixa'
                     ? 'border-gray-500 bg-gray-100 dark:bg-gray-900/50'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <span className="text-sm font-medium">Baixa</span>
+                <span className="text-xs sm:text-sm font-medium">Baixa</span>
               </button>
               <button
                 type="button"
                 onClick={() => setImportancia('media')}
-                className={`p-3 rounded-lg border-2 transition-all ${
+                className={`p-2 sm:p-3 rounded-lg border-2 transition-all ${
                   importancia === 'media'
                     ? 'border-blue-500 bg-blue-100 dark:bg-blue-900/50'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <span className="text-sm font-medium">Média</span>
+                <span className="text-xs sm:text-sm font-medium">Média</span>
               </button>
               <button
                 type="button"
                 onClick={() => setImportancia('alta')}
-                className={`p-3 rounded-lg border-2 transition-all ${
+                className={`p-2 sm:p-3 rounded-lg border-2 transition-all ${
                   importancia === 'alta'
                     ? 'border-rose-500 bg-rose-100 dark:bg-rose-900/50'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <span className="text-sm font-medium">Alta</span>
+                <span className="text-xs sm:text-sm font-medium">Alta</span>
               </button>
             </div>
           </div>
 
-          {tipo !== 'diaria' && (
+          {tipo === 'anual' && (
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -257,20 +284,20 @@ export function ModalCriarMeta({
             </div>
           )}
 
-          <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-            <p className="text-xs text-blue-700 dark:text-blue-300">
+          <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-2 sm:p-3">
+            <p className="text-[10px] sm:text-xs text-blue-700 dark:text-blue-300">
               💡 Dica: Após criar a meta, você poderá adicionar tarefas específicas para alcançá-la!
             </p>
           </div>
         </div>
 
-        <DialogFooter className="mt-6 flex justify-end gap-2">
-          <Button variant="outline" onClick={handleClose}>
+        <DialogFooter className="mt-4 sm:mt-6 flex flex-col-reverse sm:flex-row justify-end gap-2">
+          <Button variant="outline" onClick={handleClose} className="w-full sm:w-auto">
             Cancelar
           </Button>
           <Button
             onClick={handleConfirm}
-            className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white"
+            className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white w-full sm:w-auto"
           >
             Criar Meta
           </Button>

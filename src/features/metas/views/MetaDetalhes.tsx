@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useMetaViewModel } from '../viewmodel/MetaViewModel';
+import { addRecentItem } from '@/lib/recentItems';
 import { getContextoConfig, sugestoesPorContexto } from '../utils/contextosHelper';
 import { detectContextualInfo } from '../utils/contextualHelper';
 import { StudyTimer } from '../components/StudyTimer';
@@ -35,7 +36,9 @@ import {
   ChevronDown,
   ChevronUp,
   Activity,
-  Dumbbell
+  Dumbbell,
+  Check,
+  FileText
 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
@@ -44,33 +47,84 @@ export const MetaDetalhes: React.FC = () => {
   const navigate = useNavigate();
   const {
     metas,
+    metaSelecionada,
     adicionarTarefaNaMeta,
     atualizarStatusTarefa,
     excluirTarefa,
     excluirMeta,
-    concluirMeta
+    concluirMeta,
+    carregarMetaPorId,
+    loading
   } = useMetaViewModel();
-
+  // Coloque todos os hooks de estado no topo, para manter ordem estável entre renders
   const [mostrarFormTarefa, setMostrarFormTarefa] = useState(false);
   const [tituloTarefa, setTituloTarefa] = useState('');
   const [descricaoTarefa, setDescricaoTarefa] = useState('');
   const [tarefaParaExcluir, setTarefaParaExcluir] = useState<number | null>(null);
   const [showExcluirMetaDialog, setShowExcluirMetaDialog] = useState(false);
+  const [widgetAtivo, setWidgetAtivo] = useState(0);
+  const [sugestoesAbertas, setSugestoesAbertas] = useState(true);
+  const [mostrarTimerLeitura, setMostrarTimerLeitura] = useState(false);
+  const [mostrarLivros, setMostrarLivros] = useState(false);
+  const [mostrarFilmes, setMostrarFilmes] = useState(false);
+  const [mostrarCardio, setMostrarCardio] = useState(false);
+  const [mostrarWorkout, setMostrarWorkout] = useState(false);
+  const [widgetsVisiveis, setWidgetsVisiveis] = useState<{[key: string]: boolean}>({});
+  const [idadeCardio, setIdadeCardio] = useState<string>('');
+  const [nivelCardio, setNivelCardio] = useState<string>('');
+  const [treinoGerado, setTreinoGerado] = useState<any>(null);
+  const [idadeWorkout, setIdadeWorkout] = useState<string>('');
+  const [nivelWorkout, setNivelWorkout] = useState<string>('');
+  const [grupoMuscular, setGrupoMuscular] = useState<string>('');
+  const [treinoWorkoutGerado, setTreinoWorkoutGerado] = useState<any>(null);
 
-  const meta = metas.find(m => m.id_meta === Number(id));
+  const meta = metaSelecionada || metas.find(m => m.id_meta === Number(id));
+
+  useEffect(() => {
+    const metaId = Number(id);
+    if (!isNaN(metaId)) {
+      carregarMetaPorId(metaId);
+    }
+  }, [id]);
+
+  // Hook deve ser chamado em toda renderização; guarda internamente quando meta existir
+  useEffect(() => {
+    if (!meta) return;
+    addRecentItem({
+      id: meta.id_meta,
+      tipo: 'meta',
+      titulo: meta.titulo,
+      contexto: meta.contexto,
+      status: meta.status,
+      importancia: meta.importancia,
+      data: meta.data_inicio
+    });
+  }, [meta?.id_meta]);
 
   if (!meta) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <Card className="p-8 text-center">
-          <Target className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Meta não encontrada</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            A meta que você está procurando não existe ou foi removida.
-          </p>
-          <Button onClick={() => navigate('/metas/diarias')}>
-            Voltar para Metas
-          </Button>
+          {loading ? (
+            <>
+              <Target className="h-16 w-16 text-blue-400 mx-auto mb-4 animate-pulse" />
+              <h2 className="text-2xl font-bold mb-2">Carregando meta...</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Buscando informações da meta.
+              </p>
+            </>
+          ) : (
+            <>
+              <Target className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2">Meta não encontrada</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                A meta que você está procurando não existe ou foi removida.
+              </p>
+              <Button onClick={() => navigate('/metas/diarias')}>
+                Voltar para Metas
+              </Button>
+            </>
+          )}
         </Card>
       </div>
     );
@@ -81,25 +135,6 @@ export const MetaDetalhes: React.FC = () => {
   const sugestoes = sugestoesPorContexto[meta.contexto];
   
   const widgetsContextuais = detectContextualInfo(meta.titulo, meta.descricao || '');
-  
-  const [widgetAtivo, setWidgetAtivo] = useState(0);
-  
-  const [sugestoesAbertas, setSugestoesAbertas] = useState(true);
-  const [mostrarTimerLeitura, setMostrarTimerLeitura] = useState(false);
-  const [mostrarLivros, setMostrarLivros] = useState(false);
-  const [mostrarFilmes, setMostrarFilmes] = useState(false);
-  const [mostrarCardio, setMostrarCardio] = useState(false);
-  const [mostrarWorkout, setMostrarWorkout] = useState(false);
-  const [widgetsVisiveis, setWidgetsVisiveis] = useState<{[key: string]: boolean}>({});
-  
-  const [idadeCardio, setIdadeCardio] = useState<string>('');
-  const [nivelCardio, setNivelCardio] = useState<string>('');
-  const [treinoGerado, setTreinoGerado] = useState<any>(null);
-  
-  const [idadeWorkout, setIdadeWorkout] = useState<string>('');
-  const [nivelWorkout, setNivelWorkout] = useState<string>('');
-  const [grupoMuscular, setGrupoMuscular] = useState<string>('');
-  const [treinoWorkoutGerado, setTreinoWorkoutGerado] = useState<any>(null);
   
   const gerarTreinoCardio = () => {
     if (!idadeCardio || !nivelCardio) {
@@ -202,6 +237,7 @@ export const MetaDetalhes: React.FC = () => {
   const tarefasConcluidas = meta.tarefas.filter(t => t.status === 'concluida').length;
   const totalTarefas = meta.tarefas.length;
 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <ConfirmDialog
@@ -226,7 +262,7 @@ export const MetaDetalhes: React.FC = () => {
         variant="destructive"
       />
 
-      <div className="max-w-5xl mx-auto p-6">
+      <div className="max-w-5xl mx-auto p-3 sm:p-4 md:p-6">
         <div className="mb-6">
           <Button
             variant="ghost"
@@ -866,14 +902,14 @@ export const MetaDetalhes: React.FC = () => {
           </Card>
         )}
 
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <Card className="p-4 sm:p-5 md:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-5 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
               Checklist de Tarefas
             </h2>
             <Button
               onClick={() => setMostrarFormTarefa(!mostrarFormTarefa)}
-              className={`bg-gradient-to-r ${contextoConfig.gradient} hover:opacity-90 text-white`}
+              className={`bg-gradient-to-r ${contextoConfig.gradient} hover:opacity-90 text-white w-full sm:w-auto`}
             >
               <Plus className="h-4 w-4 mr-2" />
               Nova Tarefa
@@ -881,24 +917,46 @@ export const MetaDetalhes: React.FC = () => {
           </div>
 
           {mostrarFormTarefa && (
-            <Card className={`p-4 mb-6 ${contextoConfig.bgLight} ${contextoConfig.borderLight} border`}>
-              <div className="flex flex-col gap-3">
-                <Input
-                  placeholder="Título da tarefa"
-                  value={tituloTarefa}
-                  onChange={(e) => setTituloTarefa(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAdicionarTarefa()}
-                />
-                <textarea
-                  placeholder="Descrição (opcional)"
-                  value={descricaoTarefa}
-                  onChange={(e) => setDescricaoTarefa(e.target.value)}
-                  className="border p-2 rounded-lg focus:ring-2 focus:ring-primary/40 focus:outline-none min-h-[60px] resize-none"
-                />
-                <div className="flex items-center gap-2 justify-end">
-                  <Button onClick={handleAdicionarTarefa} size="sm">
-                    Adicionar
-                  </Button>
+            <Card className="p-4 sm:p-5 md:p-6 mb-5 sm:mb-6 bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-900 border-2 border-dashed border-gray-300 dark:border-gray-600 shadow-lg">
+              <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+                <div className={`p-2.5 rounded-lg ${contextoConfig.bgLight} ${contextoConfig.textColor}`}>
+                  <CheckSquare className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white">Nova Tarefa</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Organize suas atividades em etapas menores
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Título *
+                  </label>
+                  <Input
+                    placeholder="Título da tarefa"
+                    value={tituloTarefa}
+                    onChange={(e) => setTituloTarefa(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleAdicionarTarefa()}
+                    className="border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-primary"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Descrição (opcional)
+                  </label>
+                  <textarea
+                    placeholder="Adicione mais detalhes se necessário..."
+                    value={descricaoTarefa}
+                    onChange={(e) => setDescricaoTarefa(e.target.value)}
+                    className="w-full border border-gray-300 dark:border-gray-600 dark:bg-slate-800 dark:text-white p-3 rounded-lg focus:ring-2 focus:ring-primary/40 focus:border-primary focus:outline-none min-h-[80px] resize-none"
+                  />
+                </div>
+                
+                <div className="flex items-center gap-2 justify-end pt-2 border-t border-gray-200 dark:border-gray-700">
                   <Button
                     onClick={() => {
                       setMostrarFormTarefa(false);
@@ -907,8 +965,18 @@ export const MetaDetalhes: React.FC = () => {
                     }}
                     variant="outline"
                     size="sm"
+                    className="gap-2"
                   >
                     <X className="h-4 w-4" />
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={handleAdicionarTarefa} 
+                    size="sm"
+                    className={`gap-2 bg-gradient-to-r ${contextoConfig.gradient} hover:opacity-90 text-white`}
+                  >
+                    <Check className="h-4 w-4" />
+                    Adicionar Tarefa
                   </Button>
                 </div>
               </div>

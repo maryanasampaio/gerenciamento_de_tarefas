@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { TarefaViewModel } from "../viewmodel/TarefaViewModel";
-import { getTopRecentItems } from "@/lib/recentItems";
+import { getTopRecentItems, addRecentItem } from "@/lib/recentItems";
 import type { RecentItem } from "@/lib/recentItems";
 import {
   CalendarDays,
@@ -26,7 +26,7 @@ export const PaginaInicial: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { tarefas } = TarefaViewModel();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [modoEscuro, setModoEscuro] = useState(() => {
     const saved = localStorage.getItem('darkMode');
@@ -68,12 +68,12 @@ export const PaginaInicial: React.FC = () => {
 
   useEffect(() => {
     // Atualiza a lista de itens recentes quando o componente monta
-    const items = getTopRecentItems(4);
+    const items = getTopRecentItems(6);
     setItensRecentes(items);
 
     // Atualiza quando há mudanças no localStorage (via evento customizado)
     const handleRecentItemsChange = () => {
-      const updatedItems = getTopRecentItems(4);
+      const updatedItems = getTopRecentItems(6);
       setItensRecentes(updatedItems);
     };
 
@@ -142,7 +142,35 @@ export const PaginaInicial: React.FC = () => {
                          currentMonth.getFullYear() === today.getFullYear();
 
   const primeiroNome = user?.nome?.split(' ')[0] || 'usuário';
-  const fraseMotivacional = `${primeiroNome}, a persistência é o caminho do êxito`;
+  
+  const frasesMotivacionais = [
+    "a persistência é o caminho do êxito",
+    "pequenos passos todos os dias levam a grandes conquistas",
+    "o sucesso é a soma de pequenos esforços repetidos",
+    "acredite no seu potencial e vá em frente",
+    "cada dia é uma nova oportunidade para crescer",
+    "suas metas estão mais próximas do que você imagina",
+    "disciplina é a ponte entre metas e realizações",
+    "você é capaz de coisas incríveis",
+    "o progresso, não a perfeição, é o que importa",
+    "comece onde você está, use o que você tem",
+    "o único limite é aquele que você impõe a si mesmo",
+    "transforme seus sonhos em planos e seus planos em ação",
+    "a motivação de hoje é o sucesso de amanhã",
+    "foque no progresso, não na comparação",
+    "cada tarefa concluída é um passo em direção ao seu objetivo"
+  ];
+  
+  const getDayOfYear = (date: Date) => {
+    const start = new Date(date.getFullYear(), 0, 0);
+    const diff = date.getTime() - start.getTime();
+    const oneDay = 1000 * 60 * 60 * 24;
+    return Math.floor(diff / oneDay);
+  };
+  
+  const indiceFrase = getDayOfYear(today) % frasesMotivacionais.length;
+  const fraseMotivacional = `${primeiroNome}, ${frasesMotivacionais[indiceFrase]}`;
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 dark:from-slate-950 dark:via-gray-950 dark:to-slate-900 relative overflow-hidden">
@@ -150,26 +178,40 @@ export const PaginaInicial: React.FC = () => {
 
       <main
         className={`transition-all duration-300 ease-in-out ${
-          sidebarOpen ? "ml-64" : "ml-20"
-        } p-6 md:p-8 relative z-10`}
+          sidebarOpen ? "lg:ml-64" : "lg:ml-20"
+        } p-3 sm:p-4 md:p-6 lg:p-8 relative z-10`}
       >
+        {/* Botão para abrir sidebar no mobile */}
+        {!sidebarOpen && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden mb-3 p-2 rounded-lg bg-white dark:bg-slate-800 shadow-sm border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all inline-flex items-center gap-2"
+            aria-label="Abrir menu"
+          >
+            <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <span className="text-sm text-gray-700 dark:text-gray-300">Menu</span>
+          </button>
+        )}
+
         {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
               Dashboard
             </h1>
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
               Visão geral das suas atividades e metas
             </p>
           </div>
           <button
             onClick={toggleModoEscuro}
-            className="h-10 w-10 rounded-lg bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 flex items-center justify-center transition-colors"
+            className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 flex items-center justify-center transition-colors"
             title={modoEscuro ? "Modo claro" : "Modo escuro"}
           >
             {modoEscuro ? (
-              <Sun className="h-5 w-5 text-amber-500" />
+              <Sun className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
             ) : (
               <Moon className="h-5 w-5 text-slate-600" />
             )}
@@ -177,7 +219,7 @@ export const PaginaInicial: React.FC = () => {
         </div>
 
         {/* Frase Motivacional */}
-        <Card className="p-6 mb-8 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-indigo-500/10 dark:from-cyan-500/5 dark:via-blue-500/5 dark:to-indigo-500/5 backdrop-blur-sm border-l-4 border-l-cyan-500">
+        <Card className="p-4 sm:p-6 mb-6 sm:mb-8 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-indigo-500/10 dark:from-cyan-500/5 dark:via-blue-500/5 dark:to-indigo-500/5 backdrop-blur-sm border-l-4 border-l-cyan-500">
           <div className="flex items-start gap-4">
             <div className="h-12 w-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0">
               <Sparkles className="h-6 w-6 text-white" />
@@ -215,6 +257,16 @@ export const PaginaInicial: React.FC = () => {
                   <Card 
                     key={`${item.tipo}-${item.id}`}
                     onClick={() => {
+                      // Atualiza o item recente ao ser acessado
+                      addRecentItem({
+                        id: item.id,
+                        tipo: item.tipo,
+                        titulo: item.titulo,
+                        contexto: item.contexto,
+                        status: item.status,
+                        importancia: item.importancia,
+                        data: item.data,
+                      });
                       if (item.tipo === 'meta') {
                         navigate(`/metas/${item.id}`);
                       } else {

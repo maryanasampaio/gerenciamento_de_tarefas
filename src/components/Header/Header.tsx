@@ -35,7 +35,7 @@ export const Header = () => {
       
       <header className="border-b border-border bg-card shadow-sm">
         <div className="">
-          <div className="flex items-center justify-between mx-auto max-w-full px-6 py-3">
+          <div className="flex items-center justify-between mx-auto max-w-full px-3 sm:px-6 py-2 sm:py-3">
             <Link to="/pagina-inicial" className="transition-transform hover:scale-105">
               <Logo size="md" />
             </Link>
@@ -46,7 +46,7 @@ export const Header = () => {
                 <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center">
                   <User className="h-3.5 w-3.5 text-primary" />
                 </div>
-                <span className="font-medium">{user}</span>
+                <span className="font-medium hidden sm:inline">{user}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

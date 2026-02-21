@@ -57,9 +57,23 @@ export const ComoUsar: React.FC = () => {
 
       <main
         className={`transition-all duration-300 ease-in-out ${
-          sidebarOpen ? "ml-64" : "ml-20"
-        } p-6 md:p-8 relative z-10`}
+          sidebarOpen ? "lg:ml-64" : "lg:ml-20"
+        } p-3 sm:p-4 md:p-6 lg:p-8 relative z-10`}
       >
+        {/* Botão para abrir sidebar no mobile */}
+        {!sidebarOpen && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden mb-3 p-2 rounded-lg bg-white dark:bg-slate-800 shadow-sm border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all inline-flex items-center gap-2"
+            aria-label="Abrir menu"
+          >
+            <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <span className="text-sm text-gray-700 dark:text-gray-300">Menu</span>
+          </button>
+        )}
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">

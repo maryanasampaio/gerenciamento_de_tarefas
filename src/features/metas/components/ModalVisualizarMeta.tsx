@@ -23,7 +23,6 @@ import {
   DollarSign,
   Heart,
   Smile,
-  MoreHorizontal,
   Lightbulb
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -112,19 +111,21 @@ export function ModalVisualizarMeta({
       bgLight: 'bg-pink-50 dark:bg-pink-950/20',
       borderLight: 'border-pink-200 dark:border-pink-800',
       textColor: 'text-pink-600 dark:text-pink-400'
-    },
-    outros: { 
-      icon: MoreHorizontal, 
-      label: 'Outros', 
-      color: 'gray',
-      gradient: 'from-gray-500 to-slate-600',
-      bgLight: 'bg-gray-50 dark:bg-gray-950/20',
-      borderLight: 'border-gray-200 dark:border-gray-800',
-      textColor: 'text-gray-600 dark:text-gray-400'
     }
   };
 
-  const contextoAtual = contextosConfig[meta.contexto] || contextosConfig.outros;
+  // Fallback simples para contextos não mapeados
+  const fallbackConfig = {
+    icon: Target,
+    label: 'Meta',
+    color: 'gray',
+    gradient: 'from-gray-500 to-slate-600',
+    bgLight: 'bg-gray-50 dark:bg-gray-950/20',
+    borderLight: 'border-gray-200 dark:border-gray-800',
+    textColor: 'text-gray-600 dark:text-gray-400'
+  };
+
+  const contextoAtual = contextosConfig[meta.contexto as keyof typeof contextosConfig] || fallbackConfig;
   const ContextIcon = contextoAtual.icon;
 
   const studySuggestions = [
@@ -213,7 +214,7 @@ export function ModalVisualizarMeta({
       />
 
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl mx-3 sm:mx-auto max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-start justify-between">
               <div className="flex-1">

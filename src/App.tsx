@@ -14,6 +14,7 @@ import { MetasMensais } from "./features/metas/views/MetasMensais";
 import { MetasAnuais } from "./features/metas/views/MetasAnuais";
 import { MetaDetalhes } from "./features/metas/views/MetaDetalhes";
 import { ComoUsar } from "./features/ajuda/ComoUsar";
+import { GerenciarTarefas } from "./features/tarefas/views/GerenciarTarefas";
 
 function AppRoutes() {
   const location = useLocation();
@@ -33,6 +34,15 @@ function AppRoutes() {
             </RouteGuard>
 
           } />
+
+        <Route
+          path="/tarefas"
+          element={
+            <RouteGuard>
+              <GerenciarTarefas />
+            </RouteGuard>
+          }
+        />
 
         <Route
           path="/como-usar"

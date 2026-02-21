@@ -5,9 +5,12 @@ export class Repository {
   async login(usuario: string, senha: string): Promise<AuthResponse> {
     try {
       const response = await api.post<Auth>("/auth/login", { usuario, senha });
-      const { access_token, usuario: userData } = response.data;
+      const { access_token, refresh_token, usuario: userData } = response.data as any;
       
       localStorage.setItem("access_token", access_token);
+      if (refresh_token) {
+        localStorage.setItem("refresh_token", refresh_token);
+      }
       localStorage.setItem("user", JSON.stringify(userData));
 
       return { usuario: userData, access_token };
@@ -24,6 +27,7 @@ export class Repository {
       await api.post('/auth/logout');
     } finally {
       localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
       localStorage.removeItem("user");
     }
   }

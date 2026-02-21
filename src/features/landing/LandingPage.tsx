@@ -69,13 +69,13 @@ export const LandingPage = () => {
       {/* Toggle Modo Escuro */}
       <button
         onClick={toggleModoEscuro}
-        className="fixed top-6 right-6 z-50 h-12 w-12 rounded-full bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 flex items-center justify-center transition-all shadow-lg hover:shadow-xl"
+        className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 flex items-center justify-center transition-all shadow-lg hover:shadow-xl"
         title={modoEscuro ? "Modo claro" : "Modo escuro"}
       >
         {modoEscuro ? (
-          <Sun className="h-6 w-6 text-amber-500" />
+          <Sun className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />
         ) : (
-          <Moon className="h-6 w-6 text-slate-600" />
+          <Moon className="h-5 w-5 sm:h-6 sm:w-6 text-slate-600" />
         )}
       </button>
 

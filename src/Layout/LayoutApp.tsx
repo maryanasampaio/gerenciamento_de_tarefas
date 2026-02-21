@@ -1,5 +1,4 @@
 // src/Layout/LayoutApp.tsx
-import { Footer } from "@/components/Footer/Footer";
 import { useAuth } from "@/context/AuthContext";
 import { ReactNode, useState, useEffect } from "react";
 import { TaskAnimation } from "@/components/TaskAnimation/TaskAnimation";
@@ -100,8 +99,6 @@ export const LayoutApp = ({ children, currentPath = '' }: LayoutProps) => {
             </div>
           )}
         </main>
-
-        {isAuthenticated && !hideHeaderFooter && <Footer />}
       </div>
     </div>
   );

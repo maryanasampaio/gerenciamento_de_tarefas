@@ -44,16 +44,16 @@ export default function LoginView() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-8 space-y-6 shadow-xl border-0 backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 relative z-10 animate-in fade-in duration-500">
-        <div className="mb-6 text-center space-y-4">
+    <div className="min-h-screen flex items-center justify-center p-3 sm:p-4">
+      <Card className="w-full max-w-md p-5 sm:p-8 space-y-5 sm:space-y-6 shadow-xl border-0 backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 relative z-10 animate-in fade-in duration-500">
+        <div className="mb-4 sm:mb-6 text-center space-y-3 sm:space-y-4">
           <div className="flex justify-center">
             <Logo size="lg" />
           </div>
-          <p className="text-muted-foreground text-sm">Entre na sua conta para continuar organizando suas tarefas</p>
+          <p className="text-muted-foreground text-xs sm:text-sm">Entre na sua conta para continuar organizando suas tarefas</p>
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
           <div className="space-y-2">
             <Label htmlFor="usuario" className="text-sm font-semibold text-foreground flex items-center gap-2">
               <User className="h-4 w-4 text-blue-600" />
@@ -111,26 +111,26 @@ export default function LoginView() {
 
           <Button 
             type="submit" 
-            className="w-full mt-6 h-11 bg-gradient-to-r from-cyan-700 to-teal-700 hover:from-cyan-800 hover:to-teal-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold" 
+            className="w-full mt-4 sm:mt-6 h-10 sm:h-11 bg-gradient-to-r from-cyan-700 to-teal-700 hover:from-cyan-800 hover:to-teal-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold text-sm sm:text-base" 
             onClick={handleLogin}
             disabled={loading}
           >
             {loading ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                 Entrando...
               </>
             ) : (
               <>
-                <LogIn className="mr-2 h-5 w-5" />
+                <LogIn className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                 Entrar
               </>
             )}
           </Button>
         </div>
 
-        <div className="mt-6 text-center border-t border-gray-200 dark:border-gray-700 pt-6">
-          <p className="text-sm text-muted-foreground">
+        <div className="mt-4 sm:mt-6 text-center border-t border-gray-200 dark:border-gray-700 pt-4 sm:pt-6">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Não tem uma conta?{" "}
             <Link to="/cadastro" className="text-cyan-700 hover:text-teal-700 font-semibold transition-all underline-offset-4 hover:underline">
               Cadastre-se gratuitamente

@@ -8,11 +8,10 @@ import {
   LogOut, 
   ChevronLeft, 
   ChevronRight,
-  Target,
   CalendarDays,
   Calendar,
   CalendarRange,
-  ListTodo
+  HelpCircle
 } from "lucide-react";
 
 interface SidebarProps {
@@ -56,6 +55,11 @@ export const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       label: "Configurações",
       path: "/config-usuario",
     },
+    {
+      icon: HelpCircle,
+      label: "Como Usar",
+      path: "/como-usar",
+    },
   ];
 
   return (
@@ -63,15 +67,17 @@ export const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       {/* Sidebar */}
       <aside
         className={`fixed left-0 top-0 h-full bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-gray-700 shadow-lg transition-all duration-300 ease-in-out z-40 ${
-          isOpen ? "w-64" : "w-20"
+          isOpen ? "w-64" : "w-0 lg:w-20 overflow-hidden"
         }`}
       >
         {/* Header da Sidebar */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className={`flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 ${
+          !isOpen && "lg:flex hidden"
+        }`}>
           {isOpen ? (
             <Logo size="sm" />
           ) : (
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-600 to-teal-600 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-cyan-600 to-teal-600 rounded-lg items-center justify-center hidden lg:flex">
               <span className="text-white font-bold text-lg">T</span>
             </div>
           )}
@@ -90,7 +96,9 @@ export const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
         </div>
 
         {/* Menu Items */}
-        <nav className="flex flex-col gap-2 p-4">
+        <nav className={`flex flex-col gap-2 p-4 ${
+          !isOpen && "lg:flex hidden"
+        }`}>
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;

@@ -5,7 +5,7 @@ import {
   DollarSign,
   Heart,
   Smile,
-  MoreHorizontal
+  Target
 } from "lucide-react";
 import { ContextoMeta } from "../models/MetaModel";
 
@@ -75,7 +75,7 @@ export const contextosConfig: Record<ContextoMeta, ContextoConfig> = {
     textColor: 'text-pink-600 dark:text-pink-400'
   },
   outros: {
-    icon: MoreHorizontal,
+    icon: Target,
     label: 'Outros',
     color: 'gray',
     gradient: 'from-gray-500 to-slate-600',
@@ -85,8 +85,19 @@ export const contextosConfig: Record<ContextoMeta, ContextoConfig> = {
   }
 };
 
+// Fallback simples para contextos não mapeados
+const fallbackConfig: ContextoConfig = {
+  icon: Target,
+  label: 'Meta',
+  color: 'gray',
+  gradient: 'from-gray-500 to-slate-600',
+  bgLight: 'bg-gray-50 dark:bg-gray-950/20',
+  borderLight: 'border-gray-200 dark:border-gray-800',
+  textColor: 'text-gray-600 dark:text-gray-400'
+};
+
 export const getContextoConfig = (contexto: ContextoMeta): ContextoConfig => {
-  return contextosConfig[contexto] || contextosConfig.outros;
+  return contextosConfig[contexto] || fallbackConfig;
 };
 
 // Sugestões específicas por contexto
