@@ -26,18 +26,16 @@ export class NotificationService {
     return NotificationService.instance;
   }
 
-  // Verificar se o navegador suporta notificações
   isSupported(): boolean {
     return 'Notification' in globalThis && 'serviceWorker' in navigator;
   }
 
-  // Obter permissão atual
   getPermission(): NotificationPermission {
     if (!this.isSupported()) return 'denied';
     return Notification.permission;
   }
 
-  // Solicitar permissão para notificações
+  //  permissão para notificações
   async requestPermission(): Promise<boolean> {
     if (!this.isSupported()) {
       console.warn('Notificações não suportadas neste navegador');
