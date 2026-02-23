@@ -25,7 +25,6 @@ export const useNotifications = () => {
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Carregar configurações do localStorage
   useEffect(() => {
     const savedSettings = localStorage.getItem('notificationSettings');
     if (savedSettings) {

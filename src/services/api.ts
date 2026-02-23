@@ -1,55 +1,44 @@
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL as string;
+
+if (!API_URL) {
+  throw new Error("VITE_API_URL não definida no ambiente.");
+}
+
 export const api = axios.create({
-  baseURL: "http://localhost:8000/api",
+  baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
-  timeout: 10000, // 10 segundos de timeout
+  timeout: 10000,
 });
 
 let isRefreshing = false;
-let failedQueue: any[] = [];
+let failedQueue: {
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+}[] = [];
 
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
-    } else {
+    } else if (token) {
       prom.resolve(token);
     }
   });
   failedQueue = [];
 };
 
-/**
- * Logout forçado em caso de token inválido/expirado.
- * Limpa apenas chaves de autenticação e direciona para /login.
- */
 const forceLogout = () => {
   try {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
-  } catch {
-    // Ignora erros de acesso ao localStorage
-  }
+  } catch {}
 
-  try {
-    // Limpa cookies genéricos (caso backend use HttpOnly além do Bearer)
-    document.cookie.split(";").forEach((cookie) => {
-      const eqPos = cookie.indexOf("=");
-      const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
-      if (name) {
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-      }
-    });
-  } catch {
-    // Ignora erros ao manipular cookies
-  }
-
-  // Redireciona sempre para a tela de login
   window.location.href = "/login";
 };
 
@@ -68,32 +57,20 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-
     const status = error.response?.status;
-    const data = error.response?.data;
-    const mensagem: string | undefined =
-      data?.mensagem || data?.message || data?.error || data?.erro;
 
-    // Se backend indicar explicitamente que o token expirou, força logout imediato
-    if (status === 401 && mensagem && mensagem.toLowerCase().includes("token") && mensagem.toLowerCase().includes("expir")) {
-      forceLogout();
-      return Promise.reject(error);
-    }
-
-    // Se não for 401 ou já tentou refresh, rejeita
     if (status !== 401 || originalRequest._retry) {
       return Promise.reject(error);
     }
 
-    // Evita loop no endpoint de refresh e login
-    const url = originalRequest?.url || "";
-    if (url.includes("/auth/refresh") || url.includes("/auth/login")) {
-      // Se falhou no refresh ou login, limpa e redireciona
+    if (
+      originalRequest.url?.includes("/auth/login") ||
+      originalRequest.url?.includes("/auth/refresh")
+    ) {
       forceLogout();
       return Promise.reject(error);
     }
 
-    // Se estiver refreshing, enfileira a requisição
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
@@ -109,17 +86,16 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     const refreshToken = localStorage.getItem("refresh_token");
+
     if (!refreshToken) {
-      // Não tem refresh token, limpa e redireciona
       isRefreshing = false;
       forceLogout();
       return Promise.reject(error);
     }
 
     try {
-      // Tenta renovar o token
       const response = await axios.post(
-        "http://localhost:8000/api/auth/refresh",
+        `${API_URL}/auth/refresh`,
         {},
         {
           headers: {
@@ -128,24 +104,32 @@ api.interceptors.response.use(
         }
       );
 
-      const newAccessToken = response.data?.access_token || response.data?.dados?.access_token;
-      const newRefreshToken = response.data?.refresh_token || response.data?.dados?.refresh_token;
+      const newAccessToken =
+        response.data?.access_token ||
+        response.data?.dados?.access_token;
 
-      if (newAccessToken) {
-        localStorage.setItem("access_token", newAccessToken);
-        if (newRefreshToken) {
-          localStorage.setItem("refresh_token", newRefreshToken);
-        }
-        api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        processQueue(null, newAccessToken);
-        isRefreshing = false;
-        return api(originalRequest);
-      } else {
+      const newRefreshToken =
+        response.data?.refresh_token ||
+        response.data?.dados?.refresh_token;
+
+      if (!newAccessToken) {
         throw new Error("Novo token não recebido");
       }
+
+      localStorage.setItem("access_token", newAccessToken);
+
+      if (newRefreshToken) {
+        localStorage.setItem("refresh_token", newRefreshToken);
+      }
+
+      api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+      processQueue(null, newAccessToken);
+      isRefreshing = false;
+
+      return api(originalRequest);
     } catch (refreshError) {
-      // Refresh falhou, limpa e redireciona
       processQueue(refreshError, null);
       isRefreshing = false;
       forceLogout();

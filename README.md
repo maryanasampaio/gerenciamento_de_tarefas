@@ -106,7 +106,18 @@ cd gerenciamento_de_tarefas-frontend
 ```bash
 npm install
 ```
-### 3. Executar em modo de desenvolvimento 
+
+### 3. Configurar variável de ambiente
+
+Crie/edite o arquivo `.env` na raiz do projeto:
+
+```env
+VITE_API_URL=https://gerenciamentodetarefas-backend-production-faa3.up.railway.app/api
+```
+
+⚠️ Sempre reinicie o servidor após alterar o `.env`.
+
+### 4. Executar em modo de desenvolvimento 
 
 ```bash
 npm run dev
