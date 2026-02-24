@@ -96,7 +96,12 @@ export const CadastroView = () => {
         }, 2000)
       }
     } catch (err: any) {
-      modal.error("Erro ao cadastrar", err.message || "Tente novamente")
+      console.error("❌ Erro capturado no CadastroView:", err);
+      console.error("❌ Mensagem do erro:", err.message);
+      console.error("❌ Erro completo:", err.response?.data);
+      
+      const errorMessage = err.message || "Tente novamente";
+      modal.error("Erro ao cadastrar", errorMessage)
       setIsSubmitting(false)
     }
   }
