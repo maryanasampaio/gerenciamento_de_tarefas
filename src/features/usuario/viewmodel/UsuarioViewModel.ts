@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { UsuarioUseCase } from "../usecases/UsuarioUseCase";
 import { useNavigate } from "react-router-dom";
 
-export function UsuarioViewModel() {
+interface UsuarioViewModelOptions {
+  skipLoadAuthenticated?: boolean;
+}
+
+export function UsuarioViewModel(options?: UsuarioViewModelOptions) {
   const [idUsuario, setIdUsuario] = useState<number | null>(null);
 
   const [nome, setNome] = useState("");
@@ -93,7 +97,9 @@ export function UsuarioViewModel() {
   }
 
   useEffect(() => {
-    carregarUsuarioAutenticado();
+    if (!options?.skipLoadAuthenticated) {
+      carregarUsuarioAutenticado();
+    }
   }, []);
 
   async function handleCancelCadastro() {

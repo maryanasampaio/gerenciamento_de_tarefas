@@ -21,7 +21,7 @@ export const CadastroView = () => {
     senha,
     setSenha,
     handleCancelCadastro 
-  } = UsuarioViewModel()
+  } = UsuarioViewModel({ skipLoadAuthenticated: true })
 
   const toast = useToast()
   const modal = useModal()
