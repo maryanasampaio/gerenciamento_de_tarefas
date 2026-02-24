@@ -39,7 +39,12 @@ export default function LoginView() {
         navigate("/pagina-inicial");
       }, 2000);
     } catch (err: any) {
-      modal.error("Erro ao fazer login", err.message || "Verifique suas credenciais");
+      console.error("❌ Erro capturado no LoginView:", err);
+      console.error("❌ Mensagem do erro:", err.message);
+      console.error("❌ Erro completo:", err.response?.data);
+      
+      const errorMessage = err.message || "Verifique suas credenciais";
+      modal.error("Erro ao fazer login", errorMessage);
     }
   };
 

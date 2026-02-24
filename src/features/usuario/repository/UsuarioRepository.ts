@@ -20,21 +20,27 @@ export class Repository {
       return response.data;
 
     } catch (error: any) {
-      console.error("Erro detalhado ao criar usuário:", {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message
-      });
+      console.error("🔴 [UsuarioRepository] Erro detalhado ao criar usuário:");
+      console.error("  → Status HTTP:", error.response?.status);
+      console.error("  → Status Text:", error.response?.statusText);
+      console.error("  → Data completa:", error.response?.data);
+      console.error("  → Mensagem:", error.message);
+      console.error("  → Erro completo:", error);
 
       // Extrai mensagem específica do backend
       let message = 
         error.response?.data?.mensagem || 
         error.response?.data?.message || 
         error.response?.data?.error || 
-        error.response?.data?.detail;
+        error.response?.data?.detail ||
+        error.response?.data?.msg ||
+        error.response?.data?.erro;
+      
+      console.log("  → Mensagem extraída dos dados:", message);
       
       if (!message) {
         const status = error.response?.status;
+        console.log("  → Usando mensagem baseada no status:", status);
         if (status === 409) {
           message = "Este usuário ou e-mail já está em uso";
         } else if (status === 400) {
@@ -46,6 +52,7 @@ export class Repository {
         }
       }
       
+      console.log("  → Mensagem final que será lançada:", message);
       throw new Error(message);
     }
 

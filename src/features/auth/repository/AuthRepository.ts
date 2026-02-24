@@ -15,21 +15,28 @@ export class Repository {
 
       return { usuario: userData, access_token };
     } catch (error: any) {
-      console.error("Erro detalhado ao fazer login:", {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message
-      });
+      console.error("🔴 [AuthRepository] Erro detalhado ao fazer login:");
+      console.error("  → Status HTTP:", error.response?.status);
+      console.error("  → Status Text:", error.response?.statusText);
+      console.error("  → Data completa:", error.response?.data);
+      console.error("  → Mensagem:", error.message);
+      console.error("  → Erro completo:", error);
 
       // Extrai a mensagem de erro mais específica possível
+      // Procura em todos os campos possíveis que o backend pode usar
       let message = 
         error.response?.data?.mensagem || 
         error.response?.data?.message || 
         error.response?.data?.error || 
-        error.response?.data?.detail;
+        error.response?.data?.detail ||
+        error.response?.data?.msg ||
+        error.response?.data?.erro;
+      
+      console.log("  → Mensagem extraída dos dados:", message);
       
       if (!message) {
         const status = error.response?.status;
+        console.log("  → Usando mensagem baseada no status:", status);
         if (status === 404) {
           message = "Usuário não encontrado";
         } else if (status === 401) {
@@ -43,6 +50,7 @@ export class Repository {
         }
       }
       
+      console.log("  → Mensagem final que será lançada:", message);
       throw new Error(message);
     }
   }

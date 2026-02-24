@@ -63,11 +63,12 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Para login e refresh, apenas rejeita o erro sem forçar logout
+    // O componente de login vai tratar e exibir a mensagem apropriada
     if (
       originalRequest.url?.includes("/auth/login") ||
       originalRequest.url?.includes("/auth/refresh")
     ) {
-      forceLogout();
       return Promise.reject(error);
     }
 
