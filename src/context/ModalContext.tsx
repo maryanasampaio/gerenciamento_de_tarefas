@@ -52,11 +52,11 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     showModal({ title, description, type: "success", duration })
   }, [showModal])
 
-  const error = useCallback((title: string, description?: string, duration = 3000) => {
+  const error = useCallback((title: string, description?: string, duration = 6000) => {
     showModal({ title, description, type: "error", duration })
   }, [showModal])
 
-  const warning = useCallback((title: string, description?: string, duration = 3000) => {
+  const warning = useCallback((title: string, description?: string, duration = 5000) => {
     showModal({ title, description, type: "warning", duration })
   }, [showModal])
 

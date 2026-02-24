@@ -20,7 +20,33 @@ export class Repository {
       return response.data;
 
     } catch (error: any) {
-      throw new Error(error.message || "Erro ao criar usuário");
+      console.error("Erro detalhado ao criar usuário:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+
+      // Extrai mensagem específica do backend
+      let message = 
+        error.response?.data?.mensagem || 
+        error.response?.data?.message || 
+        error.response?.data?.error || 
+        error.response?.data?.detail;
+      
+      if (!message) {
+        const status = error.response?.status;
+        if (status === 409) {
+          message = "Este usuário ou e-mail já está em uso";
+        } else if (status === 400) {
+          message = "Dados inválidos. Verifique os campos.";
+        } else if (status === 500) {
+          message = "Erro no servidor. Tente novamente.";
+        } else {
+          message = error.message || "Erro ao criar usuário";
+        }
+      }
+      
+      throw new Error(message);
     }
 
   }
