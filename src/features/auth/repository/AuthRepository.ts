@@ -15,9 +15,34 @@ export class Repository {
 
       return { usuario: userData, access_token };
     } catch (error: any) {
-      console.error("Erro ao fazer login:", error.response?.data || error.message);
+      console.error("Erro detalhado ao fazer login:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
 
-      const message = error.response?.data?.message || error.response?.data?.error || "Erro ao conectar com API";
+      // Extrai a mensagem de erro mais específica possível
+      let message = 
+        error.response?.data?.mensagem || 
+        error.response?.data?.message || 
+        error.response?.data?.error || 
+        error.response?.data?.detail;
+      
+      if (!message) {
+        const status = error.response?.status;
+        if (status === 404) {
+          message = "Usuário não encontrado";
+        } else if (status === 401) {
+          message = "Usuário ou senha inválidos";
+        } else if (status === 500) {
+          message = "Erro no servidor. Tente novamente.";
+        } else if (status) {
+          message = `Erro ${status}: ${error.response.statusText || 'Erro desconhecido'}`;
+        } else {
+          message = error.message || "Erro ao conectar com a API. Verifique sua conexão.";
+        }
+      }
+      
       throw new Error(message);
     }
   }
