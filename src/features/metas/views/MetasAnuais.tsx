@@ -26,7 +26,8 @@ import {
   DollarSign,
   Heart,
   Smile,
-  Trophy
+  Trophy,
+  Loader2
 } from "lucide-react";
 import Confetti from 'react-confetti';
 
@@ -462,6 +463,10 @@ export const MetasAnuais: React.FC = () => {
         {/* Loading State com Skeleton */}
         {loading && metasDoAno.length === 0 ? (
           <div>
+            <div className="flex items-center justify-center gap-3 mb-6 py-4">
+              <Loader2 className="h-6 w-6 animate-spin text-cyan-600" />
+              <p className="text-lg font-medium text-gray-700 dark:text-gray-300">Carregando metas...</p>
+            </div>
             <div className="flex items-center justify-between mb-6">
               <div className="h-7 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
               <div className="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
@@ -498,6 +503,16 @@ export const MetasAnuais: React.FC = () => {
           </div>
         </Card>
         ) : (
+          <div className="relative">
+            {/* Overlay de loading quando há items na lista */}
+            {loading && metasDoAno.length > 0 && (
+              <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-cyan-600" />
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Processando...</p>
+                </div>
+              </div>
+            )}
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -706,6 +721,7 @@ export const MetasAnuais: React.FC = () => {
               })}
               </div>
             )}
+          </div>
           </div>
         )}
       </main>

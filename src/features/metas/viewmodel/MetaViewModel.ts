@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { MetaModel, TarefaMetaModel } from "../models/MetaModel";
 import { MetaRepository, ResumoMetas } from "../repository/MetaRepository";
 import { notificationService } from "@/services/notificationService";
+import { useModal } from "@/context/ModalContext";
 
 const repository = new MetaRepository();
 
 export function useMetaViewModel() {
+  const modal = useModal();
   const [metas, setMetas] = useState<MetaModel[]>([]);
   const [resumo, setResumo] = useState<ResumoMetas>({
     pendentes: 0,
@@ -64,10 +66,13 @@ export function useMetaViewModel() {
       
       // Retorna a meta criada para que a view possa recarregar
       return nova;
+    } catch (error: any) {
+      modal.error("Erro ao criar meta", error.message || "Tente novamente");
+      throw error;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [modal]);
 
   const adicionarTarefaNaMeta = useCallback(async (idMeta: number, tarefaDados: Partial<TarefaMetaModel>) => {
     setLoading(true);
@@ -76,10 +81,13 @@ export function useMetaViewModel() {
       const detalhes = await repository.detalhes(idMeta);
       setMetas(prev => prev.map(m => (m.id_meta === idMeta ? detalhes : m)));
       if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(detalhes);
+    } catch (error: any) {
+      modal.error("Erro ao adicionar tarefa", error.message || "Tente novamente");
+      throw error;
     } finally {
       setLoading(false);
     }
-  }, [metaSelecionada]);
+  }, [metaSelecionada, modal]);
 
   // Calcular status da meta baseado nas tarefas
   const calcularStatusMeta = (tarefas: TarefaMetaModel[]): 'pendente' | 'andamento' | 'concluida' => {
@@ -100,10 +108,13 @@ export function useMetaViewModel() {
       const metaAtualizada = await repository.atualizarStatusTarefa(idMeta, idTarefa, novoStatus === 'andamento' ? 'pendente' : novoStatus);
       setMetas(prev => prev.map(m => (m.id_meta === idMeta ? metaAtualizada : m)));
       if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(metaAtualizada);
+    } catch (error: any) {
+      modal.error("Erro ao atualizar", error.message || "Tente novamente");
+      throw error;
     } finally {
       setLoading(false);
     }
-  }, [metaSelecionada]);
+  }, [metaSelecionada, modal]);
 
   const excluirTarefa = (idMeta: number, idTarefa: number) => {
     // Sem endpoint de exclusão de tarefa no backend: mantém comportamento local por enquanto
@@ -138,10 +149,13 @@ export function useMetaViewModel() {
         total: Math.max(0, prev.total - 1)
       }));
       fecharModalVisualizar();
+    } catch (error: any) {
+      modal.error("Erro ao excluir meta", error.message || "Tente novamente");
+      throw error;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [modal]);
 
   const concluirMeta = async (idMeta: number) => {
     setLoading(true);
@@ -164,6 +178,9 @@ export function useMetaViewModel() {
       }
       
       if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(atualizada);
+    } catch (error: any) {
+      modal.error("Erro ao concluir meta", error.message || "Tente novamente");
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -216,10 +233,13 @@ export function useMetaViewModel() {
       }
       
       if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(atualizada);
+    } catch (error: any) {
+      modal.error("Erro ao atualizar meta", error.message || "Tente novamente");
+      throw error;
     } finally {
       setLoading(false);
     }
-  }, [metas, metaSelecionada]);
+  }, [metas, metaSelecionada, modal]);
 
   const calcularProgresso = (tarefas: TarefaMetaModel[]): number => {
     if (tarefas.length === 0) return 0;

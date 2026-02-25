@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { TarefaUseCase } from "../usecases/TarefaUseCase";
+import { useModal } from "@/context/ModalContext";
 
 export function TarefaViewModel() {
+  const modal = useModal();
   const [tarefas, setTarefas] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -40,6 +42,7 @@ export function TarefaViewModel() {
   ) {
     try {
       setLoading(true);
+      
       if (modoEdicao && tarefaSelecionada) {
         await tarefaUseCase.atualizar(tarefaSelecionada.id_tarefa, {
           titulo,
@@ -56,12 +59,16 @@ export function TarefaViewModel() {
           new Date().toISOString()
         );
       }
+      
       setIsModalOpen(false);
       setModoEdicao(false);
       setTarefaSelecionada(null);
       await handleListar();
     } catch (error: any) {
-      alert(error.message);
+      modal.error(
+        modoEdicao ? "Erro ao atualizar" : "Erro ao criar",
+        error.message || "Tente novamente"
+      );
     } finally {
       setLoading(false);
     }
@@ -71,10 +78,9 @@ export function TarefaViewModel() {
     try {
       setLoading(true);
       setIsModalOpen(false);
-      const response = await tarefaUseCase.excluir(id);
-      alert(response?.mensagem || "Tarefa excluida com sucesso!");
+      await tarefaUseCase.excluir(id);
     } catch (error: any) {
-      alert(error.message);
+      modal.error("Erro ao excluir", error.message || "Tente novamente");
     } finally {
       setLoading(false);
       await handleListar();
@@ -114,8 +120,9 @@ export function TarefaViewModel() {
           t.id_tarefa === id_tarefa ? { ...t, status: novoStatus } : t
         )
       );
+      
     } catch (error: any) {
-      alert("Erro ao atualizar status da tarefa: " + error.message);
+      modal.error("Erro ao atualizar", error.message || "Tente novamente");
     } finally {
       setLoading(false);
     }

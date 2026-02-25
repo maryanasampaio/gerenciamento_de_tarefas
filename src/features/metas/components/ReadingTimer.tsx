@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, RotateCcw, BookOpen } from 'lucide-react';
+import { SoundService } from '@/services/soundService';
 
 export const ReadingTimer: React.FC = () => {
   const [minutes, setMinutes] = useState(25);
@@ -19,7 +20,7 @@ export const ReadingTimer: React.FC = () => {
               // Timer completado
               setIsRunning(false);
               setIsPaused(false);
-              playSound();
+              SoundService.playTimerComplete();
               return 0;
             } else {
               setMinutes((prevMinutes) => prevMinutes - 1);
