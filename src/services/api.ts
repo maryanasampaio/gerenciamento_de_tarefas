@@ -13,6 +13,7 @@ export const api = axios.create({
     Accept: "application/json",
   },
   timeout: 10000,
+  withCredentials: true, // Permite enviar cookies nas requisições
 });
 
 let isRefreshing = false;
@@ -102,6 +103,7 @@ api.interceptors.response.use(
           headers: {
             Authorization: `Bearer ${refreshToken}`,
           },
+          withCredentials: true, // Permite enviar cookies no refresh
         }
       );
 
