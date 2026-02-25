@@ -36,6 +36,8 @@ const forceLogout = () => {
   try {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    localStorage.removeItem("expires_at");
+    localStorage.removeItem("refresh_expires_at");
     localStorage.removeItem("user");
   } catch {}
 
@@ -59,12 +61,12 @@ api.interceptors.response.use(
     const originalRequest = error.config;
     const status = error.response?.status;
 
+    // Se não for erro 401 ou já tentou o retry, rejeita
     if (status !== 401 || originalRequest._retry) {
       return Promise.reject(error);
     }
 
-    // Para login e refresh, apenas rejeita o erro sem forçar logout
-    // O componente de login vai tratar e exibir a mensagem apropriada
+    // Para login e refresh, não tenta refresh automático
     if (
       originalRequest.url?.includes("/auth/login") ||
       originalRequest.url?.includes("/auth/refresh")
@@ -72,6 +74,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Se já está fazendo refresh, enfileira a requisição
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
@@ -88,13 +91,16 @@ api.interceptors.response.use(
 
     const refreshToken = localStorage.getItem("refresh_token");
 
+    // Se não tiver refresh_token, força logout
     if (!refreshToken) {
+      processQueue(error, null);
       isRefreshing = false;
       forceLogout();
       return Promise.reject(error);
     }
 
     try {
+      // Faz o refresh usando o refresh_token no header Authorization
       const response = await axios.post(
         `${API_URL}/auth/refresh`,
         {},
@@ -105,32 +111,36 @@ api.interceptors.response.use(
         }
       );
 
-      const newAccessToken =
-        response.data?.access_token ||
-        response.data?.dados?.access_token;
+      const { 
+        access_token, 
+        refresh_token: newRefreshToken,
+        expires_in,
+        refresh_expires_in
+      } = response.data;
 
-      const newRefreshToken =
-        response.data?.refresh_token ||
-        response.data?.dados?.refresh_token;
+      // Salva os novos tokens
+      localStorage.setItem("access_token", access_token);
+      localStorage.setItem("refresh_token", newRefreshToken);
+      
+      // Atualiza as datas de expiração
+      const expiresAt = new Date(Date.now() + expires_in * 60 * 1000).toISOString();
+      const refreshExpiresAt = new Date(Date.now() + refresh_expires_in * 60 * 1000).toISOString();
+      
+      localStorage.setItem("expires_at", expiresAt);
+      localStorage.setItem("refresh_expires_at", refreshExpiresAt);
 
-      if (!newAccessToken) {
-        throw new Error("Novo token não recebido");
-      }
+      // Atualiza o header padrão e da requisição original
+      api.defaults.headers.common.Authorization = `Bearer ${access_token}`;
+      originalRequest.headers.Authorization = `Bearer ${access_token}`;
 
-      localStorage.setItem("access_token", newAccessToken);
-
-      if (newRefreshToken) {
-        localStorage.setItem("refresh_token", newRefreshToken);
-      }
-
-      api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
-      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-      processQueue(null, newAccessToken);
+      // Processa a fila de requisições que estavam esperando
+      processQueue(null, access_token);
       isRefreshing = false;
 
+      // Retenta a requisição original
       return api(originalRequest);
     } catch (refreshError) {
+      // Se o refresh falhar, força logout
       processQueue(refreshError, null);
       isRefreshing = false;
       forceLogout();

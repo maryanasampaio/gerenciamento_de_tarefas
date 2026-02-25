@@ -270,10 +270,23 @@ export const GerenciarTarefas: React.FC = () => {
         </Card>
 
         {/* Tasks List */}
-        <div className="space-y-3">
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-cyan-600" />
+        <div className="space-y-3 relative">
+          {/* Overlay de loading quando há tarefas na lista */}
+          {loading && tarefasOrdenadas.length > 0 && (
+            <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-cyan-600" />
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Processando...</p>
+              </div>
+            </div>
+          )}
+          
+          {loading && tarefasOrdenadas.length === 0 ? (
+            <div>
+              <div className="flex items-center justify-center gap-3 py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-cyan-600" />
+                <p className="text-lg font-medium text-gray-700 dark:text-gray-300">Carregando tarefas...</p>
+              </div>
             </div>
           ) : tarefasOrdenadas.length === 0 ? (
             <Card className="p-12 text-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 shadow-sm">

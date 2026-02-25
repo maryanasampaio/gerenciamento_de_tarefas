@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Play, Pause, RotateCcw, Clock, Coffee } from 'lucide-react';
+import { SoundService } from '@/services/soundService';
 
 interface StudyTimerProps {
   onComplete?: () => void;
@@ -109,8 +110,8 @@ export function StudyTimer({ onComplete }: StudyTimerProps) {
   const handleTimerComplete = () => {
     setIsRunning(false);
     
-    // Sempre tocar um som curto ao final do ciclo
-    playNotificationSound();
+    // Tocar som de conclusão
+    SoundService.playTimerComplete();
     
     if (mode === 'pomodoro') {
       const newCount = pomodorosCompleted + 1;
@@ -132,49 +133,6 @@ export function StudyTimer({ onComplete }: StudyTimerProps) {
       setMode('pomodoro');
       setTimeLeft(durations.pomodoro);
     }
-  };
-
-  const playNotificationSound = () => {
-    // Cria um som de alarme curto usando Web Audio API
-    const globalObj: any = globalThis as any;
-    const AudioContextClass = globalObj.AudioContext || globalObj.webkitAudioContext;
-    if (!AudioContextClass) return;
-
-    const audioContext = new AudioContextClass();
-    const now = audioContext.currentTime;
-
-    // Três bipes curtos em sequência, estilo alarme
-    const beepCount = 3;
-    const beepDuration = 0.25; // segundos
-    const gap = 0.2; // intervalo entre bipes
-
-    for (let i = 0; i < beepCount; i++) {
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      // Frequência levemente diferente a cada beep para dar sensação de alarme
-      oscillator.frequency.value = 850 + i * 50;
-      oscillator.type = 'square';
-
-      const startTime = now + i * (beepDuration + gap);
-      const endTime = startTime + beepDuration;
-
-      gainNode.gain.setValueAtTime(0.001, startTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.25, startTime + 0.05);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, endTime);
-
-      oscillator.start(startTime);
-      oscillator.stop(endTime + 0.05);
-    }
-
-    // Fecha o contexto após os bipes para liberar recursos
-    const totalDuration = beepCount * (beepDuration + gap) + 0.5;
-    setTimeout(() => {
-      audioContext.close();
-    }, totalDuration * 1000);
   };
 
   const toggleTimer = () => {

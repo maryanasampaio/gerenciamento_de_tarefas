@@ -1,4 +1,6 @@
 // Serviço de notificações
+import { SoundService } from './soundService';
+
 export interface NotificationConfig {
   title: string;
   body: string;
@@ -212,6 +214,9 @@ export class NotificationService {
 
   // Criar notificação de parabéns por conclusão
   async notifyCelebration(message: string): Promise<void> {
+    // Tocar som de celebração
+    SoundService.playCelebration();
+    
     await this.sendLocalNotification({
       title: '🎉 Parabéns!',
       body: message,
