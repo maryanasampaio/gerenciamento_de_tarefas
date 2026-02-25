@@ -5,25 +5,33 @@ export class Repository {
   async login(usuario: string, senha: string): Promise<AuthResponse> {
     try {
       const response = await api.post<Auth>("/auth/login", { usuario, senha });
-      const { access_token, refresh_token, usuario: userData } = response.data as any;
       
+      const { 
+        access_token, 
+        refresh_token, 
+        expires_in,
+        refresh_expires_in,
+        usuario: userData 
+      } = response.data as any;
+      
+      // Salva os tokens no localStorage
       localStorage.setItem("access_token", access_token);
-      if (refresh_token) {
-        localStorage.setItem("refresh_token", refresh_token);
+      localStorage.setItem("refresh_token", refresh_token);
+      
+      // Calcula e salva as datas de expiração
+      const expiresAt = new Date(Date.now() + expires_in * 60 * 1000).toISOString();
+      const refreshExpiresAt = new Date(Date.now() + refresh_expires_in * 60 * 1000).toISOString();
+      
+      localStorage.setItem("expires_at", expiresAt);
+      localStorage.setItem("refresh_expires_at", refreshExpiresAt);
+      
+      if (userData) {
+        localStorage.setItem("user", JSON.stringify(userData));
       }
-      localStorage.setItem("user", JSON.stringify(userData));
 
       return { usuario: userData, access_token };
     } catch (error: any) {
-      console.error("🔴 [AuthRepository] Erro detalhado ao fazer login:");
-      console.error("  → Status HTTP:", error.response?.status);
-      console.error("  → Status Text:", error.response?.statusText);
-      console.error("  → Data completa:", error.response?.data);
-      console.error("  → Mensagem:", error.message);
-      console.error("  → Erro completo:", error);
-
-      // Extrai a mensagem de erro mais específica possível
-      // Procura em todos os campos possíveis que o backend pode usar
+      // Extrai a mensagem de erro do backend
       let message = 
         error.response?.data?.mensagem || 
         error.response?.data?.message || 
@@ -32,11 +40,8 @@ export class Repository {
         error.response?.data?.msg ||
         error.response?.data?.erro;
       
-      console.log("  → Mensagem extraída dos dados:", message);
-      
       if (!message) {
         const status = error.response?.status;
-        console.log("  → Usando mensagem baseada no status:", status);
         if (status === 404) {
           message = "Usuário não encontrado";
         } else if (status === 401) {
@@ -50,7 +55,6 @@ export class Repository {
         }
       }
       
-      console.log("  → Mensagem final que será lançada:", message);
       throw new Error(message);
     }
   }
@@ -61,6 +65,8 @@ export class Repository {
     } finally {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
+      localStorage.removeItem("expires_at");
+      localStorage.removeItem("refresh_expires_at");
       localStorage.removeItem("user");
     }
   }
