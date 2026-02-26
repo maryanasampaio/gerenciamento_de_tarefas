@@ -247,7 +247,7 @@ export const MetasDiarias: React.FC = () => {
                 Todas as Metas Concluídas!
               </h2>
               <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
-                Parabéns! Você completou todas as {metasDoDia.length} {metasDoDia.length === 1 ? 'meta' : 'metas'} do dia.
+                Parabéns! Você completou todas as {todasMetasDoDia.length} {todasMetasDoDia.length === 1 ? 'meta' : 'metas'} do dia.
               </p>
               <Button
                 onClick={handleFecharCelebracao}

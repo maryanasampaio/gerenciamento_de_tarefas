@@ -54,7 +54,12 @@ export const useNotifications = () => {
       setPermission(notificationService.getPermission());
       
       if (granted) {
-        saveSettings({ ...settings, enabled: true });
+        // Usa função para garantir que pega o estado mais recente
+        setSettings(prevSettings => {
+          const newSettings = { ...prevSettings, enabled: true };
+          localStorage.setItem('notificationSettings', JSON.stringify(newSettings));
+          return newSettings;
+        });
       }
       
       return granted;
@@ -64,7 +69,7 @@ export const useNotifications = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [settings, saveSettings]);
+  }, []);
 
   // Enviar notificação de teste
   const sendTestNotification = useCallback(async () => {

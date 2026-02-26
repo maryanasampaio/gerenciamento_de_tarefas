@@ -5,6 +5,57 @@ import { notificationService } from "@/services/notificationService";
 import { useModal } from "@/context/ModalContext";
 
 const repository = new MetaRepository();
+const META_STATUS_OVERRIDES_KEY = "metaStatusOverrides";
+
+type MetaStatus = MetaModel["status"];
+type MetaStatusOverrides = Record<number, MetaStatus>;
+
+function lerOverridesStatusMeta(): MetaStatusOverrides {
+  try {
+    const raw = localStorage.getItem(META_STATUS_OVERRIDES_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as MetaStatusOverrides;
+  } catch {
+    return {};
+  }
+}
+
+function salvarOverridesStatusMeta(overrides: MetaStatusOverrides) {
+  localStorage.setItem(META_STATUS_OVERRIDES_KEY, JSON.stringify(overrides));
+}
+
+function definirOverrideStatusMeta(idMeta: number, status: MetaStatus) {
+  const overrides = lerOverridesStatusMeta();
+  overrides[idMeta] = status;
+  salvarOverridesStatusMeta(overrides);
+}
+
+function removerOverrideStatusMeta(idMeta: number) {
+  const overrides = lerOverridesStatusMeta();
+  if (overrides[idMeta] !== undefined) {
+    delete overrides[idMeta];
+    salvarOverridesStatusMeta(overrides);
+  }
+}
+
+function aplicarOverridesStatusMetas(metas: MetaModel[]): MetaModel[] {
+  const overrides = lerOverridesStatusMeta();
+  return metas.map((meta) => {
+    const override = overrides[meta.id_meta];
+    if (!override) return meta;
+    if ((meta.tarefas?.length ?? 0) > 0) return meta;
+    return { ...meta, status: override };
+  });
+}
+
+function calcularResumoLocal(metas: MetaModel[]): ResumoMetas {
+  return {
+    pendentes: metas.filter((m) => m.status === "pendente").length,
+    em_andamento: metas.filter((m) => m.status === "andamento").length,
+    concluidas: metas.filter((m) => m.status === "concluida").length,
+    total: metas.length,
+  };
+}
 
 export function useMetaViewModel() {
   const modal = useModal();
@@ -143,6 +194,7 @@ export function useMetaViewModel() {
     setLoading(true);
     try {
       await repository.deletar(idMeta);
+      removerOverrideStatusMeta(idMeta);
       setMetas(prev => prev.filter(m => m.id_meta !== idMeta));
       setResumo(prev => ({
         ...prev,
@@ -161,11 +213,34 @@ export function useMetaViewModel() {
     setLoading(true);
     try {
       const metaAntes = metas.find(m => m.id_meta === idMeta);
-      const atualizada = await repository.atualizar(idMeta, { status: 'concluida' });
-      setMetas(prev => prev.map(m => (m.id_meta === idMeta ? atualizada : m)));
+
+      if (!metaAntes) return;
+
+      let metaAtualizada: MetaModel | null = null;
+      
+      // Se tem tarefas, marca todas como concluídas (status será auto-gerenciado)
+      if (metaAntes?.tarefas && metaAntes.tarefas.length > 0) {
+        for (const tarefa of metaAntes.tarefas) {
+          if (tarefa.status !== 'concluida') {
+            await repository.atualizarStatusTarefa(idMeta, tarefa.id_tarefa_meta, 'concluida');
+          }
+        }
+        // Recarregar meta (status recalculado pelo backend)
+        metaAtualizada = await repository.detalhes(idMeta);
+        removerOverrideStatusMeta(idMeta);
+      } else {
+        metaAtualizada = await repository.atualizar(idMeta, { status: 'concluida' });
+        metaAtualizada = { ...metaAtualizada, status: 'concluida' };
+        definirOverrideStatusMeta(idMeta, 'concluida');
+      }
+      
+      if (!metaAtualizada) return;
+
+      setMetas(prev => prev.map(m => (m.id_meta === idMeta ? metaAtualizada : m)));
+      if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(metaAtualizada);
       
       // 🎉 Disparar celebração ao concluir meta
-      if (metaAntes) {
+      if (metaAntes && metaAtualizada.status === 'concluida') {
         const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
         if (settings.enabled && settings.celebrations) {
           const tasksCount = metaAntes.tarefas?.length || 0;
@@ -176,8 +251,6 @@ export function useMetaViewModel() {
           await notificationService.notifyCelebration(message);
         }
       }
-      
-      if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(atualizada);
     } catch (error: any) {
       modal.error("Erro ao concluir meta", error.message || "Tente novamente");
       throw error;
@@ -190,12 +263,46 @@ export function useMetaViewModel() {
     setLoading(true);
     try {
       const atual = metas.find(m => m.id_meta === idMeta);
-      const novoStatus = atual?.status === 'concluida' ? 'pendente' : 'concluida';
-      const atualizada = await repository.atualizar(idMeta, { status: novoStatus });
-      setMetas(prev => prev.map(m => (m.id_meta === idMeta ? atualizada : m)));
+      if (!atual) return;
+
+      const querConcluir = atual?.status !== 'concluida';
+
+      let metaAtualizada: MetaModel | null = null;
+      
+      // Se tem tarefas, atualiza através delas
+      if (atual?.tarefas && atual.tarefas.length > 0) {
+        if (querConcluir) {
+          // Marcar todas as tarefas como concluídas
+          for (const tarefa of atual.tarefas) {
+            if (tarefa.status !== 'concluida') {
+              await repository.atualizarStatusTarefa(idMeta, tarefa.id_tarefa_meta, 'concluida');
+            }
+          }
+        } else {
+          // Marcar todas as tarefas como pendentes
+          for (const tarefa of atual.tarefas) {
+            if (tarefa.status !== 'pendente') {
+              await repository.atualizarStatusTarefa(idMeta, tarefa.id_tarefa_meta, 'pendente');
+            }
+          }
+        }
+        // Recarregar meta (status recalculado pelo backend)
+        metaAtualizada = await repository.detalhes(idMeta);
+        removerOverrideStatusMeta(idMeta);
+      } else {
+        const novoStatus = querConcluir ? 'concluida' : 'pendente';
+        metaAtualizada = await repository.atualizar(idMeta, { status: novoStatus });
+        metaAtualizada = { ...metaAtualizada, status: novoStatus };
+        definirOverrideStatusMeta(idMeta, novoStatus);
+      }
+      
+      if (!metaAtualizada) return;
+
+      setMetas(prev => prev.map(m => (m.id_meta === idMeta ? metaAtualizada : m)));
+      if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(metaAtualizada);
       
       // 🎉 Disparar celebração ao concluir meta
-      if (atual && novoStatus === 'concluida') {
+      if (atual && metaAtualizada.status === 'concluida' && querConcluir) {
         const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
         if (settings.enabled && settings.celebrations) {
           const tasksCount = atual.tarefas?.length || 0;
@@ -221,9 +328,11 @@ export function useMetaViewModel() {
             novo.pendentes = Math.max(0, novo.pendentes - 1);
           }
           
-          // Incrementar no novo status
-          if (novoStatus === 'concluida') {
+          // Incrementar no novo status (vindo do backend)
+          if (metaAtualizada.status === 'concluida') {
             novo.concluidas += 1;
+          } else if (metaAtualizada.status === 'andamento') {
+            novo.em_andamento += 1;
           } else {
             novo.pendentes += 1;
           }
@@ -231,8 +340,6 @@ export function useMetaViewModel() {
           return novo;
         });
       }
-      
-      if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(atualizada);
     } catch (error: any) {
       modal.error("Erro ao atualizar meta", error.message || "Tente novamente");
       throw error;
@@ -264,22 +371,30 @@ export function useMetaViewModel() {
         prioridade: filtros?.prioridade,
         pesquisa: filtros?.pesquisa
       });
-      setMetas(response.metas);
-      setResumo(response.resumo);
+      const metasComOverride = aplicarOverridesStatusMetas(response.metas);
+      setMetas(metasComOverride);
+      setResumo(calcularResumoLocal(metasComOverride));
+    } catch (error: any) {
+      if (error?.code === 'ECONNABORTED') {
+        modal.error("Conexão lenta", "A listagem demorou para responder. Tente novamente.");
+      } else {
+        modal.error("Erro ao carregar metas", error?.message || "Tente novamente");
+      }
     } finally {
       setLoading(false);
     }
-  }, [repository]);
+  }, [modal]);
 
   const carregarMetaPorId = async (idMeta: number) => {
     setLoading(true);
     try {
       const detalhes = await repository.detalhes(idMeta);
+      const [detalhesComOverride] = aplicarOverridesStatusMetas([detalhes]);
       setMetas(prev => {
         const existe = prev.some(m => m.id_meta === idMeta);
-        return existe ? prev.map(m => (m.id_meta === idMeta ? detalhes : m)) : [...prev, detalhes];
+        return existe ? prev.map(m => (m.id_meta === idMeta ? detalhesComOverride : m)) : [...prev, detalhesComOverride];
       });
-      setMetaSelecionada(detalhes);
+      setMetaSelecionada(detalhesComOverride);
     } finally {
       setLoading(false);
     }

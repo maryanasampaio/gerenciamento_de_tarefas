@@ -49,7 +49,6 @@ export class MetaRepository {
       query.push(`pesquisa=${encodeURIComponent(params.pesquisa)}`);
     }
     const url = `/metas/listar${query.length ? `?${query.join("&")}` : ""}`;
-
     const response = await api.get(url);
     const payload = response.data;
     
@@ -146,7 +145,7 @@ export class MetaRepository {
     titulo: string;
     descricao?: string;
   }): Promise<TarefaMetaModel> {
-    const response = await api.post(`/metas/${id_meta}/tarefas/criar`, payload);
+    await api.post(`/metas/${id_meta}/tarefas/criar`, payload);
     const meta = await this.detalhes(id_meta);
     // retorna a última tarefa criada
     return meta.tarefas[meta.tarefas.length - 1];
