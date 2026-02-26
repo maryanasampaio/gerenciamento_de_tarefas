@@ -33,15 +33,10 @@ export default function LoginView() {
 
     try {
       await originalHandleLogin();
-      modal.success("Bem-vindo de volta!", "Preparando sua área de trabalho...", 2000);
-      // Redirecionar após 2 segundos
-      setTimeout(() => {
-        navigate("/pagina-inicial");
-      }, 2000);
+      navigate("/pagina-inicial");
     } catch (err: any) {
       console.error("❌ Erro capturado no LoginView:", err);
       console.error("❌ Mensagem do erro:", err.message);
-      console.error("❌ Erro completo:", err.response?.data);
       
       const errorMessage = err.message || "Verifique suas credenciais";
       modal.error("Erro ao fazer login", errorMessage);

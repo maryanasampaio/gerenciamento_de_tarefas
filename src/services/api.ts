@@ -122,12 +122,20 @@ api.interceptors.response.use(
       localStorage.setItem("access_token", access_token);
       localStorage.setItem("refresh_token", newRefreshToken);
       
-      // Atualiza as datas de expiração
-      const expiresAt = new Date(Date.now() + expires_in * 60 * 1000).toISOString();
-      const refreshExpiresAt = new Date(Date.now() + refresh_expires_in * 60 * 1000).toISOString();
-      
-      localStorage.setItem("expires_at", expiresAt);
-      localStorage.setItem("refresh_expires_at", refreshExpiresAt);
+      // Atualiza as datas de expiração apenas se os valores existirem
+      try {
+        if (expires_in && typeof expires_in === 'number') {
+          const expiresAt = new Date(Date.now() + expires_in * 60 * 1000).toISOString();
+          localStorage.setItem("expires_at", expiresAt);
+        }
+        
+        if (refresh_expires_in && typeof refresh_expires_in === 'number') {
+          const refreshExpiresAt = new Date(Date.now() + refresh_expires_in * 60 * 1000).toISOString();
+          localStorage.setItem("refresh_expires_at", refreshExpiresAt);
+        }
+      } catch (dateError) {
+        console.error("  → Erro ao calcular datas de expiração no refresh:", dateError);
+      }
 
       // Atualiza o header padrão e da requisição original
       api.defaults.headers.common.Authorization = `Bearer ${access_token}`;

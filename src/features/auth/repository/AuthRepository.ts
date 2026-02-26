@@ -6,6 +6,8 @@ export class Repository {
     try {
       const response = await api.post<Auth>("/auth/login", { usuario, senha });
       
+      console.log("✅ [AuthRepository] Login bem-sucedido, dados recebidos:", response.data);
+      
       const { 
         access_token, 
         refresh_token, 
@@ -18,12 +20,27 @@ export class Repository {
       localStorage.setItem("access_token", access_token);
       localStorage.setItem("refresh_token", refresh_token);
       
-      // Calcula e salva as datas de expiração
-      const expiresAt = new Date(Date.now() + expires_in * 60 * 1000).toISOString();
-      const refreshExpiresAt = new Date(Date.now() + refresh_expires_in * 60 * 1000).toISOString();
-      
-      localStorage.setItem("expires_at", expiresAt);
-      localStorage.setItem("refresh_expires_at", refreshExpiresAt);
+      // Calcula e salva as datas de expiração apenas se os valores existirem
+      try {
+        if (expires_in && typeof expires_in === 'number') {
+          const expiresAt = new Date(Date.now() + expires_in * 60 * 1000).toISOString();
+          localStorage.setItem("expires_at", expiresAt);
+          console.log("  → expires_at calculado:", expiresAt);
+        } else {
+          console.warn("  → expires_in não recebido ou inválido:", expires_in);
+        }
+        
+        if (refresh_expires_in && typeof refresh_expires_in === 'number') {
+          const refreshExpiresAt = new Date(Date.now() + refresh_expires_in * 60 * 1000).toISOString();
+          localStorage.setItem("refresh_expires_at", refreshExpiresAt);
+          console.log("  → refresh_expires_at calculado:", refreshExpiresAt);
+        } else {
+          console.warn("  → refresh_expires_in não recebido ou inválido:", refresh_expires_in);
+        }
+      } catch (dateError) {
+        console.error("  → Erro ao calcular datas de expiração:", dateError);
+        // Continua o login mesmo se houver erro nas datas
+      }
       
       if (userData) {
         localStorage.setItem("user", JSON.stringify(userData));
