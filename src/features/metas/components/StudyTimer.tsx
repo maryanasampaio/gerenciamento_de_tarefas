@@ -13,6 +13,7 @@ export function StudyTimer({ onComplete }: StudyTimerProps) {
   const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutos em segundos
   const [isRunning, setIsRunning] = useState(false);
   const [pomodorosCompleted, setPomodorosCompleted] = useState(0);
+  const [totalPomodorosGlobal, setTotalPomodorosGlobal] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const durations = {
@@ -24,6 +25,12 @@ export function StudyTimer({ onComplete }: StudyTimerProps) {
   // Restaura estado salvo ao montar (permite que o timer continue contando mesmo ao sair da página)
   useEffect(() => {
     try {
+      // Carrega o histórico global de pomodoros
+      const globalHistory = localStorage.getItem('pomodorosGlobalHistory');
+      if (globalHistory) {
+        setTotalPomodorosGlobal(Number.parseInt(globalHistory, 10) || 0);
+      }
+
       const raw = localStorage.getItem('studyTimerState');
       if (!raw) return;
 
@@ -116,6 +123,11 @@ export function StudyTimer({ onComplete }: StudyTimerProps) {
     if (mode === 'pomodoro') {
       const newCount = pomodorosCompleted + 1;
       setPomodorosCompleted(newCount);
+      
+      // Incrementa o histórico global
+      const newGlobalTotal = totalPomodorosGlobal + 1;
+      setTotalPomodorosGlobal(newGlobalTotal);
+      localStorage.setItem('pomodorosGlobalHistory', newGlobalTotal.toString());
       
       // Notificar conclusão
       if (onComplete) onComplete();
@@ -274,9 +286,15 @@ export function StudyTimer({ onComplete }: StudyTimerProps) {
         </div>
 
         {/* Contador de Pomodoros */}
-        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-          <span className="font-medium">Pomodoros completados:</span>
-          <span className="font-bold text-purple-600 dark:text-purple-400">{pomodorosCompleted}</span>
+        <div className="w-full space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium text-gray-600 dark:text-gray-400">Sessão atual:</span>
+            <span className="font-bold text-purple-600 dark:text-purple-400">{pomodorosCompleted} pomodoros</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium text-gray-600 dark:text-gray-400">Total histórico:</span>
+            <span className="font-bold text-purple-700 dark:text-purple-300">{totalPomodorosGlobal} pomodoros</span>
+          </div>
         </div>
 
         {/* Dicas */}

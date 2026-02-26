@@ -224,7 +224,7 @@ export const MetasAnuais: React.FC = () => {
                 Todas as Metas Concluídas!
               </h2>
               <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 mb-4 sm:mb-6">
-                Parabéns! Você completou todas as {metasDoAno.length} {metasDoAno.length === 1 ? 'meta' : 'metas'} do ano.
+                Parabéns! Você completou todas as {todasMetasDoAno.length} {todasMetasDoAno.length === 1 ? 'meta' : 'metas'} do ano.
               </p>
               <Button
                 onClick={handleFecharCelebracao}
