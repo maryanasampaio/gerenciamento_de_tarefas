@@ -8,6 +8,7 @@ import { useMetaViewModel } from '../viewmodel/MetaViewModel';
 import { addRecentItem } from '@/lib/recentItems';
 import { getContextoConfig, sugestoesPorContexto } from '../utils/contextosHelper';
 import { detectContextualInfo } from '../utils/contextualHelper';
+import { getCurrentWeatherSnapshot, type WeatherSnapshot } from '@/services/weatherService';
 import { StudyTimer } from '../components/StudyTimer';
 import { ReadingTimer } from '../components/ReadingTimerClock';
 import { TarefaMetaModel } from '../models/MetaModel';
@@ -84,6 +85,9 @@ export const MetaDetalhes: React.FC = () => {
   const [grupoMuscular, setGrupoMuscular] = useState<string>('');
   const [tipoTreinoWorkout, setTipoTreinoWorkout] = useState<'curto' | 'longo'>('curto');
   const [treinoWorkoutGerado, setTreinoWorkoutGerado] = useState<any>(null);
+  const [weatherData, setWeatherData] = useState<WeatherSnapshot | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
 
   const meta = metaSelecionada || metas.find(m => m.id_meta === Number(id));
 
@@ -107,6 +111,41 @@ export const MetaDetalhes: React.FC = () => {
       data: meta.data_inicio
     });
   }, [meta?.id_meta]);
+
+  const hasWeatherWidget = meta
+    ? detectContextualInfo(meta.titulo, meta.descricao || '').some(w => w.type === 'weather')
+    : false;
+
+  useEffect(() => {
+    if (!meta || !hasWeatherWidget) return;
+
+    let mounted = true;
+
+    const carregarClima = async () => {
+      setWeatherLoading(true);
+      setWeatherError(null);
+      try {
+        const snapshot = await getCurrentWeatherSnapshot();
+        if (mounted) {
+          setWeatherData(snapshot);
+        }
+      } catch (error: any) {
+        if (!mounted) return;
+        const message = error?.message || 'Não foi possível carregar o clima da sua localização.';
+        setWeatherError(message);
+      } finally {
+        if (mounted) {
+          setWeatherLoading(false);
+        }
+      }
+    };
+
+    carregarClima();
+
+    return () => {
+      mounted = false;
+    };
+  }, [meta?.id_meta, hasWeatherWidget]);
 
   if (!meta) {
     return (
@@ -1058,31 +1097,42 @@ export const MetaDetalhes: React.FC = () => {
                     <div className="flex items-center gap-3 mb-3">
                       <Cloud className="h-7 w-7 text-sky-600 dark:text-sky-400" />
                       <div>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-2xl font-bold text-sky-900 dark:text-sky-100">
-                            {widget.data.temperatura}°
-                          </span>
-                          <span className="text-xs font-medium text-sky-700 dark:text-sky-300">
-                            {widget.data.condicao}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-sky-600 dark:text-sky-400">
-                          <span className="flex items-center gap-1">
-                            <Droplets className="h-3 w-3" />
-                            {widget.data.umidade}%
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Wind className="h-3 w-3" />
-                            {widget.data.vento}
-                          </span>
-                        </div>
+                        {weatherLoading ? (
+                          <span className="text-sm text-sky-700 dark:text-sky-300">Obtendo clima real da sua localização...</span>
+                        ) : weatherError ? (
+                          <span className="text-sm text-red-600 dark:text-red-400">{weatherError}</span>
+                        ) : weatherData ? (
+                          <>
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-2xl font-bold text-sky-900 dark:text-sky-100">
+                                {weatherData.temperatura}°
+                              </span>
+                              <span className="text-xs font-medium text-sky-700 dark:text-sky-300">
+                                {weatherData.condicao}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-sky-700 dark:text-sky-300 mb-1">
+                              {weatherData.cidade}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-sky-600 dark:text-sky-400">
+                              <span className="flex items-center gap-1">
+                                <Droplets className="h-3 w-3" />
+                                {weatherData.umidade}%
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Wind className="h-3 w-3" />
+                                {weatherData.vento}
+                              </span>
+                            </div>
+                          </>
+                        ) : null}
                       </div>
                     </div>
-                    {widget.data.recomendacao && (
+                    {weatherData?.recomendacao && !weatherLoading && !weatherError && (
                       <div className="pt-3 border-t border-sky-200 dark:border-sky-800 flex items-start gap-2">
                         <Lightbulb className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400 flex-shrink-0 mt-0.5" />
                         <p className="text-xs text-sky-800 dark:text-sky-200">
-                          {widget.data.recomendacao}
+                          {weatherData.recomendacao}
                         </p>
                       </div>
                     )}
