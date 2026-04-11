@@ -788,6 +788,12 @@ export const MetaDetalhes: React.FC = () => {
             
             {mostrarCardio && (
               <div className="animate-in slide-in-from-top-2 duration-200 bg-gray-50 dark:bg-slate-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
+                <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <p className="text-xs text-amber-800 dark:text-amber-200">
+                    Antes de iniciar este treino, procure orientação de um profissional de educação física e, se necessário, 
+                  </p>avaliação médica.
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="idade-cardio" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
@@ -925,6 +931,11 @@ export const MetaDetalhes: React.FC = () => {
             
             {mostrarWorkout && (
               <div className="animate-in slide-in-from-top-2 duration-200 bg-gray-50 dark:bg-slate-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
+                <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <p className="text-xs text-amber-800 dark:text-amber-200">
+“Este treino é uma sugestão educativa baseada em diretrizes gerais. Consulte um profissional de educação física.                  </p>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="grupo-muscular" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">

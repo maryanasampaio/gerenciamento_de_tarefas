@@ -2,10 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sidebar } from "@/components/Sidebar/Sidebar";
 import { useAuth } from "@/context/AuthContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { TarefaViewModel } from "../viewmodel/TarefaViewModel";
-import { getTopRecentItems, addRecentItem } from "@/lib/recentItems";
+import { useMetaViewModel } from "@/features/metas/viewmodel/MetaViewModel";
+import { getTopRecentItems, addRecentItem, removeRecentItem } from "@/lib/recentItems";
 import type { RecentItem } from "@/lib/recentItems";
 import {
   CalendarDays,
@@ -26,6 +27,7 @@ export const PaginaInicial: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { tarefas } = TarefaViewModel();
+  const { metas, carregarMetas } = useMetaViewModel();
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [modoEscuro, setModoEscuro] = useState(() => {
@@ -65,29 +67,60 @@ export const PaginaInicial: React.FC = () => {
 
   // Itens recentes (metas e tarefas clicadas recentemente)
   const [itensRecentes, setItensRecentes] = useState<RecentItem[]>([]);
+  const metasRef = useRef(metas);
+  metasRef.current = metas;
+  const tarefasRef = useRef(tarefas);
+  tarefasRef.current = tarefas;
+  const metasCarregadasRef = useRef(false);
 
+  // Carrega todas as metas uma vez ao montar
   useEffect(() => {
-    // Atualiza a lista de itens recentes quando o componente monta
-    const items = getTopRecentItems(6);
-    setItensRecentes(items);
+    carregarMetas('diaria');
+    carregarMetas('mensal');
+    carregarMetas('anual');
+    metasCarregadasRef.current = true;
+  }, [carregarMetas]);
 
-    // Atualiza quando há mudanças no localStorage (via evento customizado)
+  // Valida se um item recente ainda existe
+  const itemExisteAinda = useCallback((item: RecentItem): boolean => {
+    if (item.tipo === 'meta') {
+      return metasRef.current.some(m => m.id_meta === item.id);
+    }
+    return tarefasRef.current.some(t => t.id_tarefa === item.id);
+  }, []);
+
+  // Atualiza itens recentes quando metas/tarefas mudam (apenas se já carregou)
+  useEffect(() => {
+    if (!metasCarregadasRef.current) return;
+    
+    const items = getTopRecentItems(6);
+    const itensValidos = items.filter(itemExisteAinda);
+    
+    items.forEach(item => {
+      if (!itensValidos.includes(item)) {
+        removeRecentItem(item.id, item.tipo);
+      }
+    });
+    
+    setItensRecentes(itensValidos);
+  }, [metas, tarefas, itemExisteAinda]);
+
+  // Listener para mudanças de itens recentes (localStorage)
+  useEffect(() => {
     const handleRecentItemsChange = () => {
       const updatedItems = getTopRecentItems(6);
-      setItensRecentes(updatedItems);
+      const itensValidos = updatedItems.filter(itemExisteAinda);
+      setItensRecentes(itensValidos);
     };
 
-    // Listener para mudanças no localStorage de outros componentes
-    window.addEventListener('storage', handleRecentItemsChange);
-    
-    // Listener customizado para mudanças na mesma aba
-    window.addEventListener('recentItemsChanged', handleRecentItemsChange);
+    globalThis.addEventListener('storage', handleRecentItemsChange);
+    globalThis.addEventListener('recentItemsChanged', handleRecentItemsChange);
 
     return () => {
-      window.removeEventListener('storage', handleRecentItemsChange);
-      window.removeEventListener('recentItemsChanged', handleRecentItemsChange);
+      globalThis.removeEventListener('storage', handleRecentItemsChange);
+      globalThis.removeEventListener('recentItemsChanged', handleRecentItemsChange);
     };
-  }, []);
+  }, [itemExisteAinda]);
 
   // Funções do calendário
   const getDaysInMonth = (date: Date) => {

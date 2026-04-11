@@ -7,6 +7,7 @@ import { NotificationSettings } from "@/components/NotificationSettings/Notifica
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/services/api";
 import { 
   User, 
@@ -14,12 +15,16 @@ import {
   Sun, 
   Save,
   CheckCircle2,
-  Loader2
+  Loader2,
+  HelpCircle,
+  BookOpen,
+  ArrowRight
 } from "lucide-react";
 
 export const ConfigUsuarioView = () => {
   const { user, checkAuth } = useAuth();
   const toast = useToast();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(false);
   const [modoEscuro, setModoEscuro] = useState(() => {
@@ -297,6 +302,50 @@ export const ConfigUsuarioView = () => {
                     }`}
                   />
                 </button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Como Usar o App */}
+          <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm md:col-span-2">
+            <CardHeader className="border-b border-gray-200 dark:border-slate-700 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                  <BookOpen className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Ajuda e Tutorial
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Aprenda a usar todas as funcionalidades do app
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="pt-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                <div className="flex items-start gap-3">
+                  <div className="mt-1">
+                    <HelpCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white mb-1">
+                      Guia de Utilização
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Acesse o tutorial completo sobre como usar tarefas, metas e pastas de estudo
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => navigate('/como-usar')}
+                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/30 transition-all duration-300 whitespace-nowrap"
+                >
+                  Acessar Tutorial
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>

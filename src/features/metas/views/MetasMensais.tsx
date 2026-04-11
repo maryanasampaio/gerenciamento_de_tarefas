@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,8 +66,7 @@ export const MetasMensais: React.FC = () => {
     carregarMetas,
     loading,
     getMetasPorTipo,
-    alternarConclusaoMeta,
-    resumo
+    alternarConclusaoMeta
   } = useMetaViewModel();
 
   useEffect(() => {
@@ -104,14 +103,34 @@ export const MetasMensais: React.FC = () => {
   };
 
   const mesAnoFormatado = `${(mesSelecionado.getMonth() + 1).toString().padStart(2, '0')}/${mesSelecionado.getFullYear()}`;
+  const ultimaDataCarregada = useRef<string>('');
+  const carregandoRef = useRef(false);
   
   // Carrega todas as metas do mês (sem filtros para manter contagens permanentes)
   useEffect(() => {
-    carregarMetas('mensal', mesAnoFormatado, {});
+    // Evita chamadas duplicadas
+    if (carregandoRef.current || ultimaDataCarregada.current === mesAnoFormatado) {
+      return;
+    }
+    
+    carregandoRef.current = true;
+    ultimaDataCarregada.current = mesAnoFormatado;
+    
+    carregarMetas('mensal', mesAnoFormatado, {}).finally(() => {
+      carregandoRef.current = false;
+    });
   }, [mesAnoFormatado, carregarMetas]);
   
   // Todas as metas do mês (sem filtros) - para verificar celebração
   const todasMetasDoMes = getMetasPorTipo('mensal', mesAnoFormatado);
+
+  // Recalcula resumo baseado nas metas filtradas do mês selecionado
+  const resumoDoMes = {
+    pendentes: todasMetasDoMes.filter(m => m.status === 'pendente').length,
+    em_andamento: todasMetasDoMes.filter(m => m.status === 'andamento').length,
+    concluidas: todasMetasDoMes.filter(m => m.status === 'concluida').length,
+    total: todasMetasDoMes.length
+  };
 
   // 🔔 Integração de Notificações - Lembretes automáticos e verificação periódica (6h)
   useTaskReminders(todasMetasDoMes, []);
@@ -352,7 +371,7 @@ export const MetasMensais: React.FC = () => {
                   Concluídas
                 </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1">
-                  {resumo.concluidas + tarefasDoMes.filter(t => t.status === 'concluida').length}
+                  {resumoDoMes.concluidas + tarefasDoMes.filter(t => t.status === 'concluida').length}
                 </p>
               </div>
               <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
@@ -373,7 +392,7 @@ export const MetasMensais: React.FC = () => {
                   Em Andamento
                 </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1">
-                  {resumo.em_andamento + tarefasDoMes.filter(t => t.status === 'andamento').length}
+                  {resumoDoMes.em_andamento + tarefasDoMes.filter(t => t.status === 'andamento').length}
                 </p>
               </div>
               <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center flex-shrink-0">
@@ -394,7 +413,7 @@ export const MetasMensais: React.FC = () => {
                   Pendentes
                 </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1">
-                  {resumo.pendentes + tarefasDoMes.filter(t => t.status === 'pendente').length}
+                  {resumoDoMes.pendentes + tarefasDoMes.filter(t => t.status === 'pendente').length}
                 </p>
               </div>
               <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
@@ -544,7 +563,7 @@ export const MetasMensais: React.FC = () => {
                 
                 return (
                   <Card
-                    key={`meta-${meta.id_meta}-${meta.status}`}
+                    key={`meta-${meta.id_meta}`}
                     onClick={() => {
                       addRecentItem({
                         id: meta.id_meta,

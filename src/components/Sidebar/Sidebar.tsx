@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
 import { useAuth } from "@/context/AuthContext";
+import { usePastas } from "@/context/PastaContext";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
 import { 
   LayoutDashboard, 
   Settings, 
@@ -11,7 +14,9 @@ import {
   CalendarDays,
   Calendar,
   CalendarRange,
-  HelpCircle
+  Plus,
+  Check,
+  X
 } from "lucide-react";
 
 interface SidebarProps {
@@ -21,12 +26,24 @@ interface SidebarProps {
 
 export const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
   const { logout, user } = useAuth();
+  const { pastas, criarPasta } = usePastas();
   const navigate = useNavigate();
   const location = useLocation();
+  const [criandoPasta, setCriandoPasta] = useState(false);
+  const [tituloPasta, setTituloPasta] = useState('');
 
   const handleLogout = async () => {
     await logout();
     navigate("/login");
+  };
+
+  const handleCriarPasta = () => {
+    if (tituloPasta.trim()) {
+      const novaPasta = criarPasta(tituloPasta.trim());
+      setTituloPasta('');
+      setCriandoPasta(false);
+      navigate(`/pasta/${novaPasta.id}`);
+    }
   };
 
   const menuItems = [
@@ -54,11 +71,6 @@ export const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       icon: Settings,
       label: "Configurações",
       path: "/config-usuario",
-    },
-    {
-      icon: HelpCircle,
-      label: "Como Usar",
-      path: "/como-usar",
     },
   ];
 
@@ -120,6 +132,95 @@ export const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
             );
           })}
         </nav>
+
+        {/* Seção de Pastas Personalizadas */}
+        {isOpen && (
+          <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-4 mb-20">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Minhas Pastas
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => setCriandoPasta(true)}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Input para criar nova pasta */}
+            {criandoPasta && (
+              <div className="mb-2 flex items-center gap-1 bg-gray-50 dark:bg-gray-800 p-2 rounded-lg">
+                <Input
+                  value={tituloPasta}
+                  onChange={(e) => setTituloPasta(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCriarPasta();
+                    if (e.key === 'Escape') {
+                      setTituloPasta('');
+                      setCriandoPasta(false);
+                    }
+                  }}
+                  placeholder="Nome da pasta..."
+                  className="h-8 text-sm"
+                  autoFocus
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleCriarPasta}
+                  className="h-8 w-8 text-green-600 hover:text-green-700"
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => {
+                    setTituloPasta('');
+                    setCriandoPasta(false);
+                  }}
+                  className="h-8 w-8 text-red-600 hover:text-red-700"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            {/* Lista de Pastas */}
+            <div className="space-y-1 max-h-60 overflow-y-auto">
+              {pastas.length === 0 && !criandoPasta ? (
+                <div className="text-xs text-gray-400 text-center py-4">
+                  Nenhuma pasta criada
+                </div>
+              ) : (
+                pastas.map((pasta) => {
+                  const isActive = location.pathname === `/pasta/${pasta.id}`;
+                  return (
+                    <Button
+                      key={pasta.id}
+                      variant="ghost"
+                      className={`w-full justify-start gap-2 text-sm h-9 ${
+                        isActive
+                          ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-700 hover:to-blue-700"
+                          : "hover:bg-cyan-50 hover:text-cyan-700 dark:hover:bg-cyan-950 dark:hover:text-cyan-400"
+                      }`}
+                      onClick={() => navigate(`/pasta/${pasta.id}`)}
+                    >
+                      <span className="text-base">{pasta.icone}</span>
+                      <span className="truncate flex-1 text-left">{pasta.titulo}</span>
+                      {pasta.isEstudo && (
+                        <span className="text-xs">📚</span>
+                      )}
+                    </Button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Footer da Sidebar */}
         <div className="absolute bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-700">

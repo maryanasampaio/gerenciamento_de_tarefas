@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,13 +96,27 @@ export const MetasAnuais: React.FC = () => {
     setAnoSelecionado(anoSelecionado + 1);
   };
 
+  const anoFormatado = anoSelecionado.toString();
+  const ultimaDataCarregada = useRef<string>('');
+  const carregandoRef = useRef(false);
+
   // Carrega todas as metas do ano (sem filtros para manter contagens permanentes)
   useEffect(() => {
-    carregarMetas('anual', anoSelecionado.toString(), {});
-  }, [anoSelecionado, carregarMetas]);
+    // Evita chamadas duplicadas
+    if (carregandoRef.current || ultimaDataCarregada.current === anoFormatado) {
+      return;
+    }
+    
+    carregandoRef.current = true;
+    ultimaDataCarregada.current = anoFormatado;
+    
+    carregarMetas('anual', anoFormatado, {}).finally(() => {
+      carregandoRef.current = false;
+    });
+  }, [anoFormatado, carregarMetas]);
   
   // Todas as metas do ano (sem filtros) - para verificar celebração
-  const todasMetasDoAno = getMetasPorTipo('anual', anoSelecionado.toString());
+  const todasMetasDoAno = getMetasPorTipo('anual', anoFormatado);
 
   // 🔔 Integração de Notificações - Lembretes automáticos e verificação periódica (12h)
   useTaskReminders(todasMetasDoAno, []);
@@ -536,7 +550,7 @@ export const MetasAnuais: React.FC = () => {
                 
                 return (
                   <Card
-                    key={`meta-${meta.id_meta}-${meta.status}`}
+                    key={`meta-${meta.id_meta}`}
                     onClick={() => {
                       addRecentItem({
                         id: meta.id_meta,
@@ -732,7 +746,7 @@ export const MetasAnuais: React.FC = () => {
         onConfirm={async (dados) => {
           await criarMeta(dados);
           // Recarrega lista para garantir sincronização
-          await carregarMetas('anual', anoSelecionado.toString(), {});
+          await carregarMetas('anual', anoFormatado, {});
         }}
         tipo="anual"
         dataInicial={`01/01/${anoSelecionado}`}
