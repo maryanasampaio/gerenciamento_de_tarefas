@@ -24,11 +24,11 @@ const keywords = {
 // Dados mockados
 const mockData = {
   weather: {
-    temperatura: 28,
-    condicao: 'Ensolarado',
-    umidade: 65,
-    vento: '12 km/h',
-    recomendacao: 'Ótimo dia para atividades ao ar livre!'
+    temperatura: null,
+    condicao: '',
+    umidade: null,
+    vento: '',
+    recomendacao: ''
   },
   study: {
     tecnica: 'Técnica Pomodoro',

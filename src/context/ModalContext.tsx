@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from "react"
+import { createContext, useContext, useState, useCallback, useRef, useMemo, ReactNode } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { CheckCircle, XCircle, AlertCircle, Info, Loader2 } from "lucide-react"
 
@@ -27,15 +27,21 @@ const ModalContext = createContext<ModalContextType | undefined>(undefined)
 export function ModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [modalData, setModalData] = useState<ModalOptions | null>(null)
+  const modalDataRef = useRef<ModalOptions | null>(null)
 
   const showModal = useCallback((options: ModalOptions) => {
+    modalDataRef.current = options
     setModalData(options)
     setIsOpen(true)
 
     if (options.duration && options.type !== "loading") {
       setTimeout(() => {
-        hideModal()
-        options.onClose?.()
+        setIsOpen(false)
+        setTimeout(() => {
+          options.onClose?.()
+          modalDataRef.current = null
+          setModalData(null)
+        }, 200)
       }, options.duration)
     }
   }, [])
@@ -43,10 +49,11 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const hideModal = useCallback(() => {
     setIsOpen(false)
     setTimeout(() => {
-      modalData?.onClose?.()
+      modalDataRef.current?.onClose?.()
+      modalDataRef.current = null
       setModalData(null)
     }, 200)
-  }, [modalData])
+  }, [])
 
   const success = useCallback((title: string, description?: string, duration = 2000) => {
     showModal({ title, description, type: "success", duration })
@@ -110,8 +117,10 @@ export function ModalProvider({ children }: { children: ReactNode }) {
 
   const { icon, bgGradient, iconBg, textColor } = getIconAndColors()
 
+  const contextValue = useMemo(() => ({ showModal, hideModal, success, error, warning, info, loading }), [showModal, hideModal, success, error, warning, info, loading])
+
   return (
-    <ModalContext.Provider value={{ showModal, hideModal, success, error, warning, info, loading }}>
+    <ModalContext.Provider value={contextValue}>
       {children}
       
       <Dialog open={isOpen} onOpenChange={(open) => !open && modalData?.type !== "loading" && hideModal()}>

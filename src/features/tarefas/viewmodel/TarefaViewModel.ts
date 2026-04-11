@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { TarefaUseCase } from "../usecases/TarefaUseCase";
 import { useModal } from "@/context/ModalContext";
+import { removeRecentItem } from "@/lib/recentItems";
 
 export function TarefaViewModel() {
   const modal = useModal();
@@ -78,6 +79,8 @@ export function TarefaViewModel() {
     try {
       setLoading(true);
       setIsModalOpen(false);
+      // Remove dos itens recentes
+      removeRecentItem(id, 'tarefa');
       await tarefaUseCase.excluir(id);
     } catch (error: any) {
       modal.error("Erro ao excluir", error.message || "Tente novamente");

@@ -1,28 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle, Clock, Bell, Target, TrendingUp, Calendar, Sparkles, Zap, Moon, Sun } from "lucide-react";
-import { useState, useEffect } from "react";
+import { CheckCircle, Clock, Bell, Target, TrendingUp, Calendar, Sparkles, Zap } from "lucide-react";
 import "./LandingPage.css";
 
 export const LandingPage = () => {
   const navigate = useNavigate();
-  const [modoEscuro, setModoEscuro] = useState(() => {
-    const saved = localStorage.getItem('darkMode');
-    return saved === 'true';
-  });
-
-  useEffect(() => {
-    if (modoEscuro) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('darkMode', modoEscuro.toString());
-  }, [modoEscuro]);
-
-  const toggleModoEscuro = () => {
-    setModoEscuro(!modoEscuro);
-  };
 
   const features = [
     {
@@ -66,19 +48,6 @@ export const LandingPage = () => {
 
   return (
     <div className="landing-page">
-      {/* Toggle Modo Escuro */}
-      <button
-        onClick={toggleModoEscuro}
-        className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 flex items-center justify-center transition-all shadow-lg hover:shadow-xl"
-        title={modoEscuro ? "Modo claro" : "Modo escuro"}
-      >
-        {modoEscuro ? (
-          <Sun className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />
-        ) : (
-          <Moon className="h-5 w-5 sm:h-6 sm:w-6 text-slate-600" />
-        )}
-      </button>
-
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-content">

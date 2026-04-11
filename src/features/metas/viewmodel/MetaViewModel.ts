@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { MetaModel, TarefaMetaModel } from "../models/MetaModel";
 import { MetaRepository, ResumoMetas } from "../repository/MetaRepository";
 import { notificationService } from "@/services/notificationService";
 import { useModal } from "@/context/ModalContext";
+import { removeRecentItem } from "@/lib/recentItems";
 
 const repository = new MetaRepository();
 const META_STATUS_OVERRIDES_KEY = "metaStatusOverrides";
@@ -59,6 +60,9 @@ function calcularResumoLocal(metas: MetaModel[]): ResumoMetas {
 
 export function useMetaViewModel() {
   const modal = useModal();
+  const modalRef = useRef(modal);
+  modalRef.current = modal;
+
   const [metas, setMetas] = useState<MetaModel[]>([]);
   const [resumo, setResumo] = useState<ResumoMetas>({
     pendentes: 0,
@@ -118,12 +122,12 @@ export function useMetaViewModel() {
       // Retorna a meta criada para que a view possa recarregar
       return nova;
     } catch (error: any) {
-      modal.error("Erro ao criar meta", error.message || "Tente novamente");
+      modalRef.current.error("Erro ao criar meta", error.message || "Tente novamente");
       throw error;
     } finally {
       setLoading(false);
     }
-  }, [modal]);
+  }, []);
 
   const adicionarTarefaNaMeta = useCallback(async (idMeta: number, tarefaDados: Partial<TarefaMetaModel>) => {
     setLoading(true);
@@ -133,12 +137,12 @@ export function useMetaViewModel() {
       setMetas(prev => prev.map(m => (m.id_meta === idMeta ? detalhes : m)));
       if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(detalhes);
     } catch (error: any) {
-      modal.error("Erro ao adicionar tarefa", error.message || "Tente novamente");
+      modalRef.current.error("Erro ao adicionar tarefa", error.message || "Tente novamente");
       throw error;
     } finally {
       setLoading(false);
     }
-  }, [metaSelecionada, modal]);
+  }, [metaSelecionada]);
 
   // Calcular status da meta baseado nas tarefas
   const calcularStatusMeta = (tarefas: TarefaMetaModel[]): 'pendente' | 'andamento' | 'concluida' => {
@@ -160,14 +164,17 @@ export function useMetaViewModel() {
       setMetas(prev => prev.map(m => (m.id_meta === idMeta ? metaAtualizada : m)));
       if (metaSelecionada?.id_meta === idMeta) setMetaSelecionada(metaAtualizada);
     } catch (error: any) {
-      modal.error("Erro ao atualizar", error.message || "Tente novamente");
+      modalRef.current.error("Erro ao atualizar", error.message || "Tente novamente");
       throw error;
     } finally {
       setLoading(false);
     }
-  }, [metaSelecionada, modal]);
+  }, [metaSelecionada]);
 
   const excluirTarefa = (idMeta: number, idTarefa: number) => {
+    // Remove dos itens recentes
+    removeRecentItem(idTarefa, 'tarefa');
+    
     // Sem endpoint de exclusão de tarefa no backend: mantém comportamento local por enquanto
     setMetas(prev => prev.map(meta => {
       if (meta.id_meta === idMeta) {
@@ -195,6 +202,8 @@ export function useMetaViewModel() {
     try {
       await repository.deletar(idMeta);
       removerOverrideStatusMeta(idMeta);
+      // Remove dos itens recentes
+      removeRecentItem(idMeta, 'meta');
       setMetas(prev => prev.filter(m => m.id_meta !== idMeta));
       setResumo(prev => ({
         ...prev,
@@ -202,12 +211,12 @@ export function useMetaViewModel() {
       }));
       fecharModalVisualizar();
     } catch (error: any) {
-      modal.error("Erro ao excluir meta", error.message || "Tente novamente");
+      modalRef.current.error("Erro ao excluir meta", error.message || "Tente novamente");
       throw error;
     } finally {
       setLoading(false);
     }
-  }, [modal]);
+  }, []);
 
   const concluirMeta = async (idMeta: number) => {
     setLoading(true);
@@ -252,7 +261,7 @@ export function useMetaViewModel() {
         }
       }
     } catch (error: any) {
-      modal.error("Erro ao concluir meta", error.message || "Tente novamente");
+      modalRef.current.error("Erro ao concluir meta", error.message || "Tente novamente");
       throw error;
     } finally {
       setLoading(false);
@@ -341,12 +350,12 @@ export function useMetaViewModel() {
         });
       }
     } catch (error: any) {
-      modal.error("Erro ao atualizar meta", error.message || "Tente novamente");
+      modalRef.current.error("Erro ao atualizar meta", error.message || "Tente novamente");
       throw error;
     } finally {
       setLoading(false);
     }
-  }, [metas, metaSelecionada, modal]);
+  }, [metas, metaSelecionada]);
 
   const calcularProgresso = (tarefas: TarefaMetaModel[]): number => {
     if (tarefas.length === 0) return 0;
@@ -376,14 +385,14 @@ export function useMetaViewModel() {
       setResumo(calcularResumoLocal(metasComOverride));
     } catch (error: any) {
       if (error?.code === 'ECONNABORTED') {
-        modal.error("Conexão lenta", "A listagem demorou para responder. Tente novamente.");
+        modalRef.current.error("Conexão lenta", "A listagem demorou para responder. Tente novamente.");
       } else {
-        modal.error("Erro ao carregar metas", error?.message || "Tente novamente");
+        modalRef.current.error("Erro ao carregar metas", error?.message || "Tente novamente");
       }
     } finally {
       setLoading(false);
     }
-  }, [modal]);
+  }, []);
 
   const carregarMetaPorId = async (idMeta: number) => {
     setLoading(true);
@@ -417,10 +426,9 @@ export function useMetaViewModel() {
       metasFiltradas = metasFiltradas.filter(m => {
         const created = toPtBrDate(m.created_at);
         const inicio = m.data_inicio || null; // já normalizado em pt-BR pelo mapper
-        // Compara por created_at; se ausente ou inválido, cai para data_inicio
-        if (created) return created === data;
-        if (inicio) return inicio === data;
-        return true; // se sem datas, mantém (evita esconder indevidamente)
+        // Aceita se qualquer uma das datas corresponder ao dia selecionado.
+        if (created === data || inicio === data) return true;
+        return !created && !inicio; // se sem datas, mantém (evita esconder indevidamente)
       });
     }
     if (tipo === 'mensal' && data) {

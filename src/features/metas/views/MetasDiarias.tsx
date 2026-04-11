@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Sidebar } from "@/components/Sidebar/Sidebar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { TarefaViewModel } from "@/features/tarefas/viewmodel/TarefaViewModel";
 import { useMetaViewModel } from "../viewmodel/MetaViewModel";
@@ -125,10 +125,22 @@ export const MetasDiarias: React.FC = () => {
   };
 
   const dataFormatada = dataSelecionada.toLocaleDateString('pt-BR');
+  const ultimaDataCarregada = useRef<string>('');
+  const carregandoRef = useRef(false);
   
   // Carrega todas as metas do backend (sem filtros para manter contagens permanentes)
   useEffect(() => {
-    carregarMetas('diaria', dataFormatada, {});
+    // Evita chamadas duplicadas
+    if (carregandoRef.current || ultimaDataCarregada.current === dataFormatada) {
+      return;
+    }
+    
+    carregandoRef.current = true;
+    ultimaDataCarregada.current = dataFormatada;
+    
+    carregarMetas('diaria', dataFormatada, {}).finally(() => {
+      carregandoRef.current = false;
+    });
   }, [dataFormatada, carregarMetas]);
 
   // Todas as metas do dia (sem filtros) - para verificar celebração
@@ -540,7 +552,7 @@ export const MetasDiarias: React.FC = () => {
                 
                 return (
                   <Card
-                    key={`meta-${meta.id_meta}-${meta.status}`}
+                    key={`meta-${meta.id_meta}`}
                     onClick={() => {
                       // Adiciona aos itens recentes
                       addRecentItem({
